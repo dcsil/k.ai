@@ -13,16 +13,17 @@
 
 ## About Ali
 
-Ali is this and that but mainly those.
+Ali is from Istanbul, Turkey. He has industry experience as a Product Manager in an Agile environment of high customer involvement, in addition to earlier development roles. He enjoys anything creative: art, music, literature...
 
 ## Strengths
 
-- one
-- two
-- three
+- Calmness
+- Leadership
+- Fast Learning
+- Creativity
 
 ## Weaknesses
 
-- one
-- two
-- three
+- Could have too many interests, might cause distractions here and there...
+- Sometimes too stress-free
+- Perfectionism, getting stuck in loops before starting things
