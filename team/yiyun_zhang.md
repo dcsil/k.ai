@@ -1,6 +1,6 @@
 # Yiyun (Yvonne) Zhang
 
-![Yiyun Zhang Profile](./yiyun_zhang.jpeg)
+<img src="./yiyun_zhang.jpeg" width="300">
 
 - Computer Science Major & Statistics Major
 - zhangyiyun178@gmail.com
