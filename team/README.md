@@ -3,8 +3,9 @@
 People at COMPANY NAME
 ---
 
-- [Jane Doe, Engineering](./jane_doe.md)
-- ...
+- [James Chen](./james_chen.md)
+- [Monique Mattia](./monique_mattia.md)
+- [Yvonne Zhang](./yiyun_zhang.md)
 
 ### Team Leader
 
