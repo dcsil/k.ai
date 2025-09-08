@@ -18,8 +18,7 @@ Yiyun (Yvonne) Zhang is elected to be the first leader of our group. Yvonne prev
 
 #### Responsibilities
 <!-- What is their role for your team?	--> 
-- James Chen
-- Kevin Hu
-- Ali Eren Kaya
-- Monique Mattia
-- Yvonne Zhang
+The team leader is responsible for:
+- Manage project schedule and meeting schedule
+- Plan meeting agenda
+- Keep track of project progress
