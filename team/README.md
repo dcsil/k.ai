@@ -5,9 +5,9 @@ People at COMPANY NAME
 
 - [James Chen](./james_chen.md)
 - [Kevin Hu](./kevin_hu.md)
+- [Ali Eren Kaya](./alieren_kaya.md)
 - [Monique Mattia](./monique_mattia.md)
 - [Yvonne Zhang](./yiyun_zhang.md)
-- [Ali Eren Kaya](./alieren_kaya.md)
 
 
 ### Team Leader
