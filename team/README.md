@@ -4,6 +4,7 @@ People at COMPANY NAME
 ---
 
 - [James Chen](./james_chen.md)
+- [Kevin Hu](./kevin_hu.md)
 - [Monique Mattia](./monique_mattia.md)
 - [Yvonne Zhang](./yiyun_zhang.md)
 
