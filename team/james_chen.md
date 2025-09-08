@@ -1,6 +1,6 @@
 # James Chen
 
-<img src="./james_chen.jpeg" width="300"> TODO find a pic
+<img src="./james_chen.jpeg" width="300">
 
 - Developer
 - jchen9827@gmail.com
