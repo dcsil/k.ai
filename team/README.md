@@ -3,7 +3,6 @@
 People at k.ai
 ---
 
-- [Ali Eren Kaya](./alieren_kaya.md)
 - [James Chen](./james_chen.md)
 - [Kevin Hu](./kevin_hu.md)
 - [Ali Eren Kaya](./alieren_kaya.md)
@@ -19,4 +18,8 @@ Yiyun (Yvonne) Zhang is elected to be the first leader of our group. Yvonne prev
 
 #### Responsibilities
 <!-- What is their role for your team?	--> 
-- ...
+- James Chen
+- Kevin Hu
+- Ali Eren Kaya
+- Monique Mattia
+- Yvonne Zhang
