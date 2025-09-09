@@ -8,7 +8,7 @@
 ## Links
 
 - [GitHub](https://github.com/alieren1805)
-- [LinkedIn](www.linkedin.com/in/ali-eren-kaya)
+- [LinkedIn](https://www.linkedin.com/in/ali-eren-kaya)
 - [Resume](https://drive.google.com/file/d/1pi6n4zxdfUj3zPUEei6yhB5SiWspNZof/view?usp=sharing)
 
 ## About Ali
