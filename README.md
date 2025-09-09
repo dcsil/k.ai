@@ -4,7 +4,7 @@
 
 #### Team Discord: CSC454/491-k.ai
 
-k.ao is a company founded in the AI industry. k.ai aims to create a kind and sustainable.
+k.ai is a company founded in the AI industry. k.ai aims to create a kind and sustainable.
 
 Table of Contents
 ---
