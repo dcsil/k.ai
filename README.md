@@ -1,6 +1,6 @@
 # k.ai
 
-![Team Logo](./logo.png)
+![Team Logo](./kai_logo.png)
 
 #### Team Discord: CSC454/491-k.ai
 
