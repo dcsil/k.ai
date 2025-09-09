@@ -3,11 +3,11 @@
 People at k.ai
 ---
 
-- [James Chen](./james_chen.md)
-- [Kevin Hu](./kevin_hu.md)
-- [Ali Eren Kaya](./alieren_kaya.md)
-- [Monique Mattia](./monique_mattia.md)
-- [Yvonne Zhang](./yiyun_zhang.md)
+- [James Chen, business and engineering](./james_chen.md)
+- [Kevin Hu, business and engineering](./kevin_hu.md)
+- [Ali Eren Kaya, business and engineering](./alieren_kaya.md)
+- [Monique Mattia, business](./monique_mattia.md)
+- [Yvonne Zhang, business and engineering](./yiyun_zhang.md)
 
 
 ### Team Leader
