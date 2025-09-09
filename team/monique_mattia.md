@@ -1,6 +1,6 @@
 # Monique Mattia (CSC454)
 
-![Monique Mattia Profile](./monique_mattia.jpeg)
+<img src="./monique_mattia.jpeg" width="300">
 
 - 4th Year Computer Science Specialist & Cognitive Science Major
 - mmattia909@gmail.com
