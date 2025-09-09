@@ -1,6 +1,6 @@
 # Ali Eren Kaya
 
-![Ali Eren Kaya Profile](./alieren_kaya.jpeg)
+<img src="./alieren_kaya.jpeg" width="300">
 
 - 4th Year Computer Science Major & Mathematics, Art History Minor
 - alieren.kaya@mail.utoronto.ca
