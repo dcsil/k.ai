@@ -1,16 +1,10 @@
-# Team Repo Template
-
-This Repository includes a template for your Team's Repository. https://github.com/dcsil/klutch is a good example of an implementation of this!
-
-**README template starts below this line 👇👇👇 Delete above this line :)**
-
-# COMPANY NAME
+# k.ai
 
 ![Team Logo](./logo.png)
 
-#### Team Slack Channel: #team\-\<your\-company\-name\-here\>
+#### Team Discord: CSC454/491-k.ai
 
-COMPANY NAME is a company founded in the THEME industry. COMPANY NAME aims to VISION STATEMENT.
+k.ao is a company founded in the AI industry. k.ai aims to create a kind and sustainable.
 
 Table of Contents
 ---
