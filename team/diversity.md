@@ -1,28 +1,58 @@
 Diversity
 ---
 
-Diversity is ... Intro Statement
+We believe that diversity - both visible and non-visible - allows us to generate better ideas, better serve a wide range of customers, and can add to a sense of belonging for customers when they see others like them in our leadership team. Diversity is especially important as our customers - independent musicians - are a diverse group spanning a broad age range. In this document, we reflect on our team background and our strengths and weaknesses. We also reflect on our diversity, and how our blind spots can be addressed.
 
+## Strengths
 
-Team Background
----
+- As a Computer Science Specialist at the University of Toronto, James has worked on an ad management system used by small businesses in his first co-op term, honing his ability to learn new technologies. He also has experience in poster design from doing research in CS education and UX design experience from a course.
+- Yvonne is a fourth-year student in Computer Science and Statistics at the University of Toronto with extensive frontend development experience gained through diverse academic projects. She has also previously worked as a software developer intern at an AI startup, where she demonstrated her ability to quickly adapt to new technologies and apply strong technical skills in a fast-paced environment.
+- Monique (CSC454) has experience in design and brand development. Volunteering with a local music group, Monique designed a website and merchandise to align with brand aesthetics. More generally, she has creative and artistic abilities that will benefit the project by adding thoughtful and intriguing ideas to the product.
+- Kevin is currently pursuing a bachelor's degree in Computer Science specialist and Linguistics minor. Having worked in the tech industry as a co-op student, Kevin is experienced with backend and full-stack development. In courses and during his spare time, Kevin has also built on various projects that involve full-stack development, AI frameworks, CI/CD workflows, networking, Unreal Engine, and much more. He brings to the team a unique combination of software engineering expertise and hands-on industry experiences like CI/CD.
+- Ali is a Computer Science, Mathematics, and Art History student at the University of Toronto with extensive product and project management experience. He has served as a Product Manager at SOTI Research & Innovation Lab and co-founded BrainBlots art collective. His background bridges technical expertise with creative problem-solving, making him well-suited for cross-functional startup environments.
 
-Our team has a varied background. We have people from multiple continents who speak many languages combined....
+## Weaknesses
+While our team has strong technical skills across backend, frontend, and design, there are several areas where we currently lack expertise. One of the most significant gaps is our limited experience as independent artists, who represent our target customers. We do not yet fully understand the processes and workflows, or the psychological challenges, involved in creating, releasing, and promoting artistic work. Without firsthand knowledge of these experiences, we risk missing important details in the customer journey. To address this, it will be essential for us to view this process from our customers’ perspectives and build empathy for their needs and pain points.
 
-## Strengths & Weaknesses
+We also recognize a potential lack of deep experience with AI and data products on cloud platforms. While many of us have technical backgrounds, applying AI systems effectively requires specialized knowledge, especially in a domain like music and media. We may require help in this area to learn how to use products and services like this rapidly.
 
-Our team has....
+Beyond technical considerations, our team has limited experience in planning and executing a startup, particularly an innovation-driven enterprise. While we have academic and co-op backgrounds in development, running a business involves strategic, financial, and operational expertise that we have not yet fully developed.
+
+Similarly, while we do have strong software engineering skills, most of us lack direct experience in mobile app development and product deployment. This will likely be an important technical hurdle that we need to address as we start to create a functional MVP.
+
+Another important gap is our limited experience in building and sustaining online communities. An important part of our vision is to not just create a platform that provides a service that is purely transactional, we would also like to create something that fosters mentorship, peer support, and meaningful connections among artists, so this is an area we cannot overlook. We do not yet have firsthand knowledge of what it takes to encourage participation, establish trust, and maintain long-term engagement in an online community. To help strengthen this capability, we will need advice from experienced online community managers.
+
 
 ### Subject Matter Experts
 
-Subject matter experts (SMEs) who can help us address our expertise gaps are...
+Although some team members have been a part of startups or companies, we lack experience in building one ourselves from the ground up. Planning and execution of an original idea that is viable for business may prove challenging without support. To mitigate our lack of experience in this area, we can seek assistance and guidance from meeting with Mario (CSC454 professor with extensive startup experience) and referencing learned course material.
+
+On the technical side, Databricks is a new platform for us, and our team does not yet have deep knowledge of data architecture or AI integration strategies. It will be crucial for us to build competency in these cloud products quickly. Professor Victoria, who works at Databricks, can provide invaluable guidance to help us navigate the platform and apply it effectively in our project. Additionally, online communities and documentation will serve as supplementary resources as we learn more about these tools.
+
+We lack expertise in terms of the industry our startup is pursuing. While almost all of us have a passion for music, we lack professional experience in this field. This lack of insight may prove challenging when it comes to understanding the needs of our target users. However, our team member, Monique, has connections to independent artists in the music industry. We can leverage these connections to get direct feedback from our target users in regard to their detailed workflows and specific needs. 
+
+While we have strong software engineering backgrounds, we have limited experience in mobile app development and product deployment. To address this, we will rely on a combination of self-learning guides online and the guidance of professors and TAs. With these support, we will be able to quickly gain knowledge in mobile frameworks, deployment pipelines, and best practices for delivering a functional and reliable product.
+
+We might not have rich experience on building online communities, so we will try to reach out to community managers of similar platforms, such as Reddit’s music community. We can receive advice on how we could maintain a platform enabling mentorships and peer connections. We will also be able to better understand the strategies to grow and moderate a community in the long run. Their insights will help us create a platform that artists actually want to participate in.
 
 ## Diversity
 
-Our team has a varied background, but we acknowledge that we do not have people experienced in/who are....
+### Team Background
+
+Our team at k.ai brings together five people with different but complementary backgrounds. While based in Toronto, we come from cities in different countries, including Canada (Alberta and Ontario), China, and Turkey. We have strong technical and UX design skills from internships and startups. Many of us have worked with industry partners and managed stakeholder relationships, which will be valuable for this course.
+
+Speaking of personality, many of us have an introverted side. During collaboration, we noticed how we approach problems thoughtfully and methodically, and how we work well with detailed information and focus deeply on tasks. What unites us all is that we describe ourselves as “kind,” suggesting our team values smooth teamwork and supportive relationships. We share a preference for meaningful discussions and are open to different opinions. This personality trait could be beneficial for our project, especially when it comes to understanding our users’ needs and developing well-researched solutions.
+
+Although we are initially aiming at an English-speaking market, we are a multilingual team with experience with Mandarin, Japanese, Cantonese, and French. These languages, especially French, are major languages spoken in Canada, where we are based.
+
+Our team size limits our diversity. While we are initially targeting customers aged 18 - 35, we are all in our early twenties, which may lead us to overlook the needs of those aged 25 - 35. We are also familiar with technology and are pursuing a Bachelor’s degree in computer science, which may not be the case for our customers. (Two of us are also studying art history and cognitive science, which could help us better understand our customers.) In the next section, we will focus on how we can address these potential blind spots. As able-bodied individuals, we also do not have the lived experience of those living with a disability. This may cause us to miss considering the needs of people with disabilities when using our software. To address this, we will consider principles of universal design and research any specific barriers for independent artists if we have time. Finally, we do not represent all demographic groups in terms of gender and ethnicity. This makes it important to actively learn from musicians from different backgrounds.
 
 ### How this can impact us
 
-A potential impact of this is...
+One major way our team setup could affect our work is through unconscious bias toward our own ideas. Since none of us are independent musicians ourselves, we might create solutions based on what we think artists need rather than what they actually need. We could miss important problems or focus on issues that aren’t really that significant. On a business level, this could lead to building a product that doesn’t solve the real problem, resulting in business failure. To mitigate this bias, we will need to extensively research target users from resources and personal connections, to verify the viability of ideas.
 
-People with backgrounds that differ from out own can help us in the THEME industry because...
+Our team’s age range also creates some blind spots. We are all around our early twenties, and this means that we might miss the challenges faced by musicians in different age ranges. Musicians in various age ranges face different challenges, like balancing music with established career or family responsibilities, that we haven’t experienced yet. To address this, we would actively seek out and interview musicians from different age groups, particularly those in their late twenties and thirties, to understand their unique needs and incorporate their perspectives into our design process.
+
+Since almost all of us have strong technology backgrounds, we might assume our users are as comfortable with complex digital tools as we are. However, some independent musicians might prefer simpler interfaces or have less experience with newer technologies. We need to make sure our solution works well for people with different levels of tech experience by testing our prototypes with a broader audience.
+
+Finally, we all come from similar educational backgrounds in computer science. Independent musicians could have much more varied educational experiences. This difference might affect how we think about learning and support features in our product. We would design for people who learn and work in ways that might be different from our academic path. We'll also conduct usability testing with musicians who have non-technical backgrounds and validate that our interface works intuitively.
