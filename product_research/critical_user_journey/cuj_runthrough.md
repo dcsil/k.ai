@@ -1,4 +1,4 @@
-# A3 CUJ Runthrough
+# A3 Critical User Journey (CUJ) Runthrough
 
 ## Team Constellations
 
