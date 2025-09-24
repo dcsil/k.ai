@@ -16,12 +16,13 @@ Group Members:
 **Submission Date:** 2025/09/24
 
 ## ⚡ TL;DR
+To add
 
 ---
 
 ## 🎯 Goal
 
-** **
+**To add **
 
 ## 🧰 Tools Used
 
@@ -29,11 +30,11 @@ Group Members:
 
 ## 🧑‍💻 Persona Description
 
-
+To add
 
 ## 📘 Summary of Findings
 
-
+To add
 
 ## 💡 Recommendations
 
