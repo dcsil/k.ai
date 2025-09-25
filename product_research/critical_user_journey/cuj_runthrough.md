@@ -69,4 +69,4 @@ To add
 
 | Step | Notes (What \+ Why) | Screenshot |
 | ----- | ----- | ----- |
-| 1 | Googled Graph API to access "First Request" documentation | \!\[screenshot1.png\] |
+| 1 | Googled Graph API to access "First Request" documentation | ![ss1.png](.\assets\ss1.png) |
