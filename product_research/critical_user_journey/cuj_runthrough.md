@@ -106,7 +106,13 @@ If you hit a roadblock like we did with permissions, create a throwaway test app
 
 | Task | Time | Switches |
 | ----- | ----- | ----- |
-|  |  min |  |
+| Register & Log In to Meta & Meta Dev | 10 min | 3 |
+| Meta Apps Familiarization | 3 min |   |
+| App Creation | 5 min | 2 |
+| Graph API Documentation Review | 15 min | 5 |
+| Graph API Explorer Tasks: Fields & Permissions | 15 min | 3 |
+| Searches for Debugging/Resource Finding | 10 min |   |
+| Debugging | 20 min | 2 |
 
 **Total Time:** 
 **Total Context Switches:** 
