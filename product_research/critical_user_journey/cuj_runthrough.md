@@ -114,8 +114,9 @@ If you hit a roadblock like we did with permissions, create a throwaway test app
 | Searches for Debugging/Resource Finding | 10 min |   |
 | Debugging | 20 min | 2 |
 
-**Total Time:** 
-**Total Context Switches:** 
+**Total Time: 1.3 hours** 
+
+**Total Context Switches: 15** 
 
 ## Full CUJ Table (Step-by-Step Documentation)
 
