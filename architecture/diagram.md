@@ -1,11 +1,3 @@
-This file is a placeholder for the architecture diagram that is part of [Assignment 3 for CSC491](https://csc491.dcsil.ca/assignments/a3/)
+The frontend is made possible by a React web app. It connects to Next.js in the backend. In the MVP, the backend connects to a social media management API, specifically Hootsuite, which allows management of multiple social media platforms. For the database, Prisma ORM and SQLite are used. (Longer term features include billing and authentication, which will be enabled by APIs.)
 
-It does **not** need to be a markdown file, or a mermaid diagram. Feel free to upload an image instead and use any file extension that Github supports. However, please keep the file name as 'diagram' to ease graading.
-
-```mermaid
-  graph TD;
-      A-->B;
-      A-->C;
-      B-->D;
-      C-->D;
-```
+<img src="./diagram.png" width="1000">
