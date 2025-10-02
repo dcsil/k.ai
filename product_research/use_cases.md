@@ -99,8 +99,6 @@ As a musician who is planning to release or has just released a new song, I want
 
 ## JTBD 3 - (CUJs 5, 6):
 
-Note: This JTBD is mostly about the infrastructural services to our platform. Things like support for users will likely be added in the backend regardless of if we mention it here or not, so we might as well put it here.
-
 As an emerging artist, I want the platform I use to have a clean and intuitive interface, plus simple and affordable payment options, so that I can save time and money to focus on the music itself.
 
 ### Functional Requirements
@@ -122,6 +120,65 @@ As an emerging artist, I want the platform I use to have a clean and intuitive i
    - All features described under this JTBD/CUJ are reachable in some way within 2 layers of menus.
 - (MVP) Backend + DB should be hostable locally / cost within the free tier limits of our cloud provider.
 - (long-term) Customers with saved payment details can complete a transaction within 30s.
-     
+
+## Critical User Journeys
+
+### CUJ 1
+
+The user can see a timeline on the dashboard (which includes a task list and progress bar) to indicate progress within the current release strategy. This should reflect the overall status of release tasks/activities.
+
+Computer interface sketch:
+
+<img src="./sketches/cuj_1.jpg" width="600">
+
+### CUJ 2
+
+The user can see a list of steps associated with the timeline, and can click on/expand them for more details.
+The user sees a release timeline from the dashboard with a list of to-dos. They can click on a task to expand it. There will be a detailed panel showing:
+- Task title
+- Status (Not Started, In Progress, Completed), with a clickable status that allows the user to switch between “Not Started” and “In Progress”, and a checkbox which marks complete for the task.
+- A checkbox which marks a task as complete
+- Notes field
+- Delete task
+
+<img src="./sketches/cuj_2.png" width="500">
+
+
+### CUJ 3
+
+The user can create, edit, and delete steps / tasks on the release timeline.
+- Creation: The user types the new todo, selects a deadline date from the calendar dropdown, and hits enter to add a new todo. The progress bar updates accordingly.
+- Mark task as complete / incomplete: The user clicks on the checkbox at the front of the todo. The progress bar updates accordingly.
+- Change status property: The user clicks on the status property to change the status from Not Started to In Progress or vice versa. As the progress bar does not include tasks that are not started, it updates accordingly when tasks are started.
+- Edit deadline date: The user clicks on the calendar and selects a new date.
+- Add / Edit notes: The user clicks on the task. In the detailed dropdown, they click on the notes field to edit it.
+- Delete: The user clicks on a task. In the detailed dropdown, they click “Delete task”. A pop-up asks them to confirm deleting the task. If they confirm, the task is deleted. The progress bar updates accordingly.
+
+### CUJ 4
+
+The user navigates to the “Social Media” section from their release dashboard. Then, they create a post by:
+- Uploading media files (could be pictures or videos)
+- Writing custom captions with platform-specific character limits shown.
+
+The user selects target platforms, such as Instagram, Tik Tok, X, or Facebook, via checkboxes. They then choose scheduling options by clicking either “Post” or “Schedule Post” buttons. After that, the system confirms successful posting/scheduling with a message and adds the task to their release timeline.
+
+<img src="./sketches/cuj_4.png" width="500">
+
+### CUJ 5
+
+The user can log into their account to access the system, view their artist profile, and manage relevant information.
+- Users can log into the platform with their preferred method.
+- New users can go to the signup page with the signup button
+
+<img src="./sketches/cuj_5.png" width="600">
+
+### CUJ 6
+
+The user is able to select a billing option that suits them and make payment if necessary.
+- There will be multiple price tiers to choose from. They might include a free tier, a monthly/yearly subscription, or a contract to share revenue beyond a certain threshold.
+- Each tier will provide different benefits (subject to change)
+- Selecting a tier will guide the user to a signup page, then continue to payment if necessary.
+
+<img src="./sketches/cuj_6.png" width="600">
 
 <!-- At least 3, and no more than 6 use cases should be specified -->
