@@ -1,0 +1,436 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// --------------------
+// Enums
+// --------------------
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum ThemePreference {
+  LIGHT
+  DARK
+  SYSTEM
+}
+
+enum TaskStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum SocialPlatform {
+  X
+  INSTAGRAM
+  FACEBOOK
+  TIKTOK
+}
+
+enum SocialPostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  FAILED
+  CANCELLED
+}
+
+enum ConnectionStatus {
+  CONNECTED
+  EXPIRED
+  REVOKED
+  ERROR
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  INCOMPLETE
+}
+
+enum NotificationChannel {
+  EMAIL
+  IN_APP
+}
+
+enum NotificationType {
+  RELEASE_REMINDER
+  POST_PUBLISHED
+  BILLING
+}
+
+enum NotificationStatus {
+  QUEUED
+  SENT
+  FAILED
+  READ
+}
+
+enum MediaStorageProvider {
+  LOCAL
+  S3
+  GCS
+}
+
+// --------------------
+// Models
+// --------------------
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  emailVerified DateTime?
+  passwordHash String? // null when only social login is used
+
+  // Profile
+  displayName       String?
+  publicArtistName  String?
+  bio               String?
+  avatarUrl         String?
+  timezone          String? // e.g., "America/Toronto"
+
+  // Security
+  failedLoginCount Int      @default(0)
+  lockedUntil      DateTime?
+  role             UserRole @default(USER)
+
+  // Relations
+  preferences      UserPreference?
+  authAccounts     AuthAccount[]
+  refreshTokens    RefreshToken[]
+  emailVerifications EmailVerificationToken[]
+  passwordResets   PasswordResetToken[]
+  loginAttempts    LoginAttempt[]
+
+  strategies       ReleaseStrategy[]
+  tasks            Task[]
+
+  socialAccounts   SocialAccount[]
+  media            Media[]
+  socialPosts      SocialPost[]
+
+  subscriptions    Subscription[]
+  notifications    Notification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserPreference {
+  id         String  @id @default(cuid())
+  userId     String  @unique
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Notification toggles
+  emailReleaseReminders   Boolean @default(true)
+  emailPostPublished      Boolean @default(true)
+  emailBillingNotices     Boolean @default(true)
+
+  inAppReleaseReminders   Boolean @default(true)
+  inAppPostPublished      Boolean @default(true)
+  inAppBillingNotices     Boolean @default(true)
+
+  // UI
+  theme ThemePreference @default(SYSTEM)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// OAuth accounts for authentication (e.g., Google/Apple for sign-in)
+model AuthAccount {
+  id                 String @id @default(cuid())
+  userId             String
+  user               User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider           String // e.g., 'google', 'apple'
+  providerAccountId  String // sub / id from provider
+  accessToken        String?
+  refreshToken       String?
+  tokenType          String?
+  scope              String?
+  expiresAt          DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+// Refresh tokens for JWT-based sessions (store hash only)
+model RefreshToken {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash      String   @unique
+  expiresAt      DateTime
+  revokedAt      DateTime?
+  createdByIp    String?
+  userAgent      String?
+  replacedById   String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+
+  createdAt DateTime @default(now())
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+
+  createdAt DateTime @default(now())
+}
+
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  ip        String?
+  success   Boolean
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+// Release planning
+model ReleaseStrategy {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  isArchived Boolean @default(false)
+
+  tasks     Task[]
+  socialPosts SocialPost[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@unique([userId, name])
+}
+
+model Task {
+  id                 String       @id @default(cuid())
+  userId             String
+  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  releaseStrategyId  String
+  releaseStrategy    ReleaseStrategy @relation(fields: [releaseStrategyId], references: [id], onDelete: Cascade)
+
+  title       String
+  notes       String?
+  dueAt       DateTime?
+  status      TaskStatus   @default(NOT_STARTED)
+  priority    TaskPriority @default(MEDIUM)
+  position    Int          @default(0) // for manual ordering (drag & drop)
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([releaseStrategyId, position])
+  @@index([releaseStrategyId, dueAt])
+  @@index([releaseStrategyId, status])
+}
+
+// Social posting
+model SocialPost {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Optional link to a release plan
+  releaseStrategyId String?
+  releaseStrategy   ReleaseStrategy? @relation(fields: [releaseStrategyId], references: [id], onDelete: SetNull)
+
+  contentText   String
+  status        SocialPostStatus @default(DRAFT)
+  scheduledAt   DateTime?
+  publishedAt   DateTime?
+  platformMetadata Json?
+
+  // Relations
+  targets   SocialPostTarget[]
+  media     SocialPostMedia[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([scheduledAt])
+}
+
+// Per-platform targeting and status
+model SocialPostTarget {
+  id        String   @id @default(cuid())
+  postId    String
+  post      SocialPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  platform  SocialPlatform
+  status    SocialPostStatus @default(DRAFT)
+  publishedAt DateTime?
+  remotePostId String?
+  error       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([postId, platform])
+  @@index([status])
+}
+
+// Media assets (images/videos) uploaded by user
+model Media {
+  id         String  @id @default(cuid())
+  userId     String
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  storage    MediaStorageProvider @default(LOCAL)
+  url        String // absolute or app-relative path
+  fileName   String
+  mimeType   String
+  sizeBytes  Int
+  width      Int?
+  height     Int?
+  durationMs Int?
+  checksum   String?
+
+  posts      SocialPostMedia[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// Join table to order media in a post
+model SocialPostMedia {
+  id       String @id @default(cuid())
+  postId   String
+  post     SocialPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  mediaId  String
+  media    Media   @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  position Int     @default(0)
+
+  @@unique([postId, mediaId])
+  @@index([postId, position])
+}
+
+// Connected accounts for posting (platform OAuth)
+model SocialAccount {
+  id                 String @id @default(cuid())
+  userId             String
+  user               User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform           SocialPlatform
+  accountUsername    String
+  connectionStatus   ConnectionStatus @default(CONNECTED)
+  oauthAccessTokenEnc String? // encrypted
+  oauthRefreshTokenEnc String? // encrypted
+  tokenExpiresAt     DateTime?
+  scopes             String?
+  lastRefreshAt      DateTime?
+  metadata           Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, platform, accountUsername])
+  @@index([userId])
+}
+
+// Billing
+model Plan {
+  id            String @id @default(cuid())
+  name          String @unique
+  priceCents    Int    @default(0)
+  currency      String @default("usd")
+  interval      String @default("month") // month, year
+
+  // Simple limits for MVP
+  maxScheduledPostsPerMonth Int @default(10)
+  maxReleases               Int @default(3)
+  maxTasksPerRelease        Int @default(500)
+
+  stripePriceId String?
+
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id          String @id @default(cuid())
+  userId      String
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId      String
+  plan        Plan   @relation(fields: [planId], references: [id])
+  status      SubscriptionStatus @default(TRIALING)
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  cancelAtPeriodEnd  Boolean @default(false)
+  trialEndsAt        DateTime?
+
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+// Notification log (email or in-app)
+model Notification {
+  id        String @id @default(cuid())
+  userId    String
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  channel   NotificationChannel
+  status    NotificationStatus @default(QUEUED)
+  subject   String?
+  payload   Json?
+  sentAt    DateTime?
+  readAt    DateTime?
+  error     String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, type, channel])
+}
