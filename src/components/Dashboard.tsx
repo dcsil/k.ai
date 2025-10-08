@@ -13,13 +13,7 @@ type Task = {
   date?: string;
 };
 
-// TODO: localStorage key. Bump the version string here if change the storage shape.
 const STORAGE_KEY = "k_ai_tasks_v1";
-
-// Lightweight client-only id generator (sufficient for demo data)
-function makeId() {
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-}
 
 export default function Dashboard() {
   const [tasks, setTasks] = useState<Task[]>(() => {
@@ -29,26 +23,7 @@ export default function Dashboard() {
     } catch (e) {
       /* ignore */
     }
-
-    // sample tasks
-    return [
-      {
-        id: makeId(),
-        title: "Announce release date",
-        notes: "",
-        status: "completed",
-        expanded: true,
-        date: "Sep 7",
-      },
-      {
-        id: makeId(),
-        title: "Finish creating marketing assets",
-        notes: "",
-        status: "in_progress",
-        expanded: true,
-        date: "Sep 7",
-      },
-    ];
+    return [];
   });
 
   // Persist tasks to localStorage whenever they change.
@@ -65,7 +40,14 @@ export default function Dashboard() {
 
   function addTask(title: string) {
     if (!title.trim()) return;
-    const t: Task = { id: makeId(), title: title.trim(), notes: "", status: "not_started", expanded: true, date: new Date().toLocaleDateString() };
+    const t: Task = { 
+      id: Date.now().toString(), 
+      title: title.trim(), 
+      notes: "", 
+      status: "not_started", 
+      expanded: true, 
+      date: new Date().toLocaleDateString() 
+    };
     setTasks((s) => [t, ...s]);
   }
 
@@ -123,10 +105,12 @@ export default function Dashboard() {
       <div className="max-w-5xl bg-card border border-border rounded-lg overflow-hidden">
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Release Tasks</h2>
-            <div className="flex items-center gap-3">
-              <div className="px-3 py-1 rounded-md bg-accent-foreground/10 text-accent-foreground font-semibold">{progress}% complete</div>
-            </div>
+            <h2 className="text-lg font-semibold">Tasks</h2>
+            {tasks.length > 0 && (
+              <div className="px-3 py-1 rounded-md bg-accent-foreground/10 text-accent-foreground font-semibold">
+                {progress}% complete
+              </div>
+            )}
           </div>
 
           <div className="flex gap-3 mb-6">
@@ -135,7 +119,11 @@ export default function Dashboard() {
           </div>
 
           <div className="space-y-4">
-            {tasks.length === 0 && <div className="text-sm text-muted">No tasks yet — add one to get started.</div>}
+            {tasks.length === 0 && (
+              <div className="text-center py-8">
+                <p className="text-lg text-muted-foreground">Welcome to k.ai Dashboard! Add a task above.</p>
+              </div>
+            )}
 
             {tasks.map((task) => (
               <div key={task.id} className={`border border-border rounded-md bg-card overflow-hidden ${task.expanded ? "" : ""}`}>
