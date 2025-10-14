@@ -1,18 +1,15 @@
+/**
+ * Integration coverage for the entire auth journey. This test exercises the real
+ * Next.js route handlers against a cloned SQLite database so we validate that sign-up,
+ * sign-in, refresh rotation, and logout behave correctly when Prisma, cookies, and
+ * JWT creation all run together.
+ */
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { NextRequest } from "next/server";
 import { randomUUID } from "node:crypto";
-import { copyFileSync, mkdirSync, unlinkSync } from "node:fs";
-import { join } from "node:path";
 import type { PrismaClient } from "@/generated/prisma";
 import { hashToken } from "@/lib/auth/refreshToken";
-
-const tmpDir = join(process.cwd(), "tests", ".tmp");
-mkdirSync(tmpDir, { recursive: true });
-const testDbPath = join(tmpDir, `auth-flow-${randomUUID()}.db`);
-const sourceDbPath = join(process.cwd(), "prisma", "dev.db");
-copyFileSync(sourceDbPath, testDbPath);
-process.env.DATABASE_URL = `file:${testDbPath}`;
-process.env.JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET ?? "integration-test-secret";
+import { cloneSqliteDatabase, ensureTestJwtSecret, resetPrismaClientSingleton } from "../../utils/integrationDb";
 
 let prisma: PrismaClient;
 let signupPost: typeof import("@/app/api/auth/signup/route").POST;
@@ -20,6 +17,7 @@ let loginPost: typeof import("@/app/api/auth/login/route").POST;
 let refreshPost: typeof import("@/app/api/auth/refresh/route").POST;
 let logoutPost: typeof import("@/app/api/auth/logout/route").POST;
 let cookieName = "refresh_token";
+let testDbCleanup: (() => void) | undefined;
 
 function buildRequest(url: string, options: { json?: unknown; cookie?: string } = {}) {
   const headers = new Headers({
@@ -44,14 +42,21 @@ function buildRequest(url: string, options: { json?: unknown; cookie?: string } 
 
 describe.sequential("Auth API integration", () => {
   beforeAll(async () => {
-    // Ensure we create a fresh Prisma client against the integration database.
-    // @ts-expect-error: allow reassigning global prisma reference for tests.
-    delete globalThis.prisma;
+    // Clone the dev database and publish its file URL to DATABASE_URL before we import Prisma.
+    // resetPrismaClientSingleton clears the cached client so the subsequent import of @/lib/prisma
+    // re-reads DATABASE_URL and binds to the freshly cloned file instead of the developer's local DB.
+    const jwtSecret = ensureTestJwtSecret();
+    const { cleanup } = cloneSqliteDatabase({ prefix: "auth-flow" });
+    testDbCleanup = cleanup;
+
+    resetPrismaClientSingleton();
     const prismaModule = await import("@/lib/prisma");
     prisma = prismaModule.prisma;
 
     const configModule = await import("@/lib/config");
-    configModule.appConfig.jwtAccessSecret = process.env.JWT_ACCESS_SECRET;
+  // Overwrite the in-memory config after the module loads so downstream code signs JWTs with
+  // the deterministic testing secret (matching ensureTestJwtSecret).
+  configModule.appConfig.jwtAccessSecret = jwtSecret;
     cookieName = configModule.appConfig.refreshTokenCookieName;
 
     signupPost = (await import("@/app/api/auth/signup/route")).POST;
@@ -61,6 +66,7 @@ describe.sequential("Auth API integration", () => {
   });
 
   afterEach(async () => {
+    // Reset tables between scenarios to keep assertions deterministic.
     await prisma.$transaction([
       prisma.loginAttempt.deleteMany(),
       prisma.refreshToken.deleteMany(),
@@ -72,16 +78,13 @@ describe.sequential("Auth API integration", () => {
 
   afterAll(async () => {
     await prisma.$disconnect();
-    try {
-      unlinkSync(testDbPath);
-    } catch (error) {
-      console.warn("Failed to remove test database", error);
-    }
+    testDbCleanup?.();
   });
 
   it("allows a user to sign up, sign in, refresh, and logout", async () => {
     const email = `integration-${randomUUID()}@example.com`;
     const password = "Sup3rS3cret!";
+    // console.log(`Database URL: ${process.env.DATABASE_URL}`);
 
     const signupRequest = buildRequest("http://localhost/api/auth/signup", {
       json: {
