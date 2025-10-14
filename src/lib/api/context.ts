@@ -1,3 +1,7 @@
+/**
+ * Extracts common metadata (IP + user agent) from incoming requests for auditing/security logic.
+ * Services consume this lightweight shape when recording refresh tokens and login attempts.
+ */
 import { NextRequest } from "next/server";
 import { RequestContext } from "@/server/services/authService";
 

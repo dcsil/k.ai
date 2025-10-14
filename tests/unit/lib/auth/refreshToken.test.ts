@@ -1,3 +1,7 @@
+/**
+ * Sanity checks for refresh token helpers to guarantee token entropy and hashing behavior meet
+ * expectations. These tests guard against accidental changes to encoding length or algorithm.
+ */
 import { describe, expect, it } from "vitest";
 
 describe("refresh token helpers", () => {

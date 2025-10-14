@@ -1,3 +1,8 @@
+/**
+ * POST /api/auth/password/request-reset
+ * Initiates the password reset flow by delegating the email-focused logic to authService. The
+ * route always returns 200 to avoid leaking user existence information.
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { requestPasswordResetSchema } from "@/lib/validation/auth";
 import { requestPasswordReset } from "@/server/services/authService";

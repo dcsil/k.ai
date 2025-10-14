@@ -1,3 +1,7 @@
+/**
+ * Unit coverage for the JWT helpers. Ensures access tokens are signed/verified correctly and that
+ * missing or mismatched secrets produce clear errors.
+ */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const USER_PAYLOAD = {

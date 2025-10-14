@@ -1,3 +1,9 @@
+/**
+ * POST /api/auth/signup
+ * Accepts validated signup payloads, calls into authService to create the user + session, and
+ * returns the serialised user snapshot alongside new access/refresh tokens (cookie). Keeping the
+ * route lightweight ensures business rules remain in the service layer.
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { signupSchema } from "@/lib/validation/auth";
 import { extractRequestContext } from "@/lib/api/context";

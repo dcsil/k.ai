@@ -1,3 +1,8 @@
+/**
+ * Unit tests for the login API route. These use lightweight mocks around Next.js primitives and
+ * authService to ensure the handler returns the correct payloads, sets cookies, and delegates
+ * error handling appropriately.
+ */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockAttachRefreshTokenCookie = vi.fn();

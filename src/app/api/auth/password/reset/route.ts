@@ -1,3 +1,8 @@
+/**
+ * POST /api/auth/password/reset
+ * Exchanges a reset token for a new password by invoking authService. On success we simply return
+ * 204 and let clients decide how to proceed; errors funnel through respondWithError.
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { passwordResetSchema } from "@/lib/validation/auth";
 import { resetPassword } from "@/server/services/authService";

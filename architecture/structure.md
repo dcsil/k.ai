@@ -13,6 +13,7 @@ Goals:
 .
 ├─ prisma/                         # Prisma schema, migrations, seeds
 │  ├─ schema.prisma
+│  ├─ dev.db                       # SQLite dev database (checked in for local + tests)
 │  ├─ migrations/
 │  └─ seed.ts                      # optional seeding (plans, demo data)
 ├─ public/                         # Static assets served at /
@@ -100,49 +101,58 @@ Goals:
 │  │  ├─ layout.tsx                  # Root layout (theme provider)
 │  │  └─ page.tsx                    # Landing page or redirect
 │  ├─ components/                    # Reusable UI components
-│  │  ├─ ui/                         # Design system primitives (buttons, inputs)
-│  │  ├─ forms/                      # Form controls, schema-bound fields
-│  │  ├─ layout/                     # App layout pieces (sidebar, header)
-│  │  └─ charts/                     # Progress bars, charts
-│  ├─ hooks/                         # Client hooks (theme, keyboard shortcuts, data fetching)
+│  │  ├─ Dashboard.tsx               # Current dashboard prototype (renders in app/page.tsx)
+│  │  ├─ ui/                         # Design system primitives (buttons, inputs) (planned)
+│  │  ├─ forms/                      # Form controls, schema-bound fields (planned)
+│  │  ├─ layout/                     # App layout pieces (sidebar, header) (planned)
+│  │  └─ charts/                     # Progress bars, charts (planned)
+│  ├─ hooks/                         # Client hooks (theme, keyboard shortcuts, data fetching) (planned)
 │  ├─ lib/                           # Shared libraries (server/client)
 │  │  ├─ prisma.ts                   # Prisma client singleton (import from src/generated/prisma)
+│  │  ├─ config.ts                   # app config (env, constants)
+│  │  ├─ api/
+│  │  │  ├─ authCookies.ts           # refresh cookie helpers
+│  │  │  ├─ context.ts               # request metadata extraction
+│  │  │  └─ errorResponse.ts         # unified error formatter
 │  │  ├─ auth/
 │  │  │  ├─ jwt.ts                   # sign/verify access tokens
-│  │  │  ├─ refresh.ts               # refresh token issue/revoke
-│  │  │  └─ password.ts              # hashing, password policy
-│  │  ├─ crypto.ts                   # encryption helpers for OAuth tokens
-│  │  ├─ email.ts                    # email sending (reset/verify)
-│  │  ├─ rateLimit.ts                # reusable rate limiter util
-│  │  ├─ pagination.ts               # cursor helpers
-│  │  ├─ validation/                 # zod schemas for REST payloads
-│  │  ├─ error.ts                    # error classes/formatting
-│  │  ├─ logger.ts                   # pino/console wrapper
-│  │  └─ config.ts                   # app config (env, constants)
+│  │  │  ├─ password.ts              # hashing, password policy
+│  │  │  └─ refreshToken.ts          # refresh token helpers
+│  │  ├─ crypto.ts                   # encryption helpers for OAuth tokens (planned)
+│  │  ├─ email.ts                    # email sending (reset/verify) (planned)
+│  │  ├─ rateLimit.ts                # reusable rate limiter util (planned)
+│  │  ├─ pagination.ts               # cursor helpers (planned)
+│  │  ├─ validation/                 # zod schemas for REST payloads (planned)
+│  │  ├─ error.ts                    # error classes/formatting (planned)
+│  │  ├─ logger.ts                   # pino/console wrapper (planned)
 │  ├─ server/                        # Server-only domain logic
 │  │  ├─ repositories/               # DB access (thin wrappers around Prisma)
-│  │  │  ├─ userRepo.ts
-│  │  │  ├─ releaseRepo.ts
-│  │  │  ├─ taskRepo.ts
-│  │  │  ├─ socialRepo.ts
-│  │  │  ├─ mediaRepo.ts
-│  │  │  └─ billingRepo.ts
+│  │  │  ├─ userRepository.ts
+│  │  │  ├─ refreshTokenRepository.ts
+│  │  │  ├─ passwordResetTokenRepository.ts
+│  │  │  ├─ emailVerificationTokenRepository.ts
+│  │  │  ├─ loginAttemptRepository.ts
+│  │  │  ├─ releaseRepo.ts           # planned
+│  │  │  ├─ taskRepo.ts              # planned
+│  │  │  ├─ socialRepo.ts            # planned
+│  │  │  ├─ mediaRepo.ts             # planned
+│  │  │  └─ billingRepo.ts           # planned
 │  │  ├─ services/                   # Business logic/use-cases
 │  │  │  ├─ authService.ts
-│  │  │  ├─ releaseService.ts
-│  │  │  ├─ taskService.ts
-│  │  │  ├─ postService.ts           # Compose platform posting, validations
-│  │  │  ├─ socialAccountService.ts
-│  │  │  ├─ mediaService.ts
-│  │  │  └─ billingService.ts
+│  │  │  ├─ releaseService.ts        # planned
+│  │  │  ├─ taskService.ts           # planned
+│  │  │  ├─ postService.ts           # Compose platform posting, validations (planned)
+│  │  │  ├─ socialAccountService.ts  # planned
+│  │  │  ├─ mediaService.ts          # planned
+│  │  │  └─ billingService.ts        # planned
 │  │  ├─ workflows/                  # Multi-step flows, schedulers
-│  │  │  └─ publishWorkflow.ts
+│  │  │  └─ publishWorkflow.ts       # planned
 │  │  └─ platform/                   # Platform clients (X, Instagram, etc.)
-│  │     ├─ xClient.ts
-│  │     ├─ instagramClient.ts
-│  │     └─ facebookClient.ts
-│  ├─ styles/                        # Global styles (if split)
-│  ├─ types/                         # Shared TypeScript types/DTOs
+│  │     ├─ xClient.ts               # planned
+│  │     ├─ instagramClient.ts       # planned
+│  │     └─ facebookClient.ts        # planned
+│  ├─ styles/                        # Global styles (if split) (planned)
+│  ├─ types/                         # Shared TypeScript types/DTOs (planned)
 │  └─ generated/
 │     └─ prisma/                     # Prisma Client output (auto-generated)
 ├─ scripts/                          # Node scripts (CLI, jobs, dev tooling)
@@ -152,9 +162,16 @@ Goals:
 ├─ storage/                          # Dev-only local storage for larger media (excluded from git)
 │  └─ media/
 ├─ tests/
-│  ├─ unit/                          # Unit tests (services, libs, repos)
-│  ├─ api/                           # API contract tests (supertest/fetch)
-│  └─ e2e/                           # E2E tests (Playwright)
+│  ├─ unit/
+│  │  ├─ lib/
+│  │  │  └─ auth/                    # Auth helper unit tests
+│  │  └─ api/
+│  │     └─ auth/                    # Auth route unit tests
+│  ├─ integration/
+│  │  └─ api/                        # Auth flow integration tests
+│  ├─ utils/                         # Shared helpers (e.g., SQLite clone for tests)
+│  ├─ api/                           # API contract tests (planned)
+│  └─ e2e/                           # E2E tests (Playwright) (planned)
 ├─ middleware.ts                     # Next.js edge middleware (auth, rate-limit)
 ├─ next.config.ts
 ├─ tsconfig.json

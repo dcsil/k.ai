@@ -1,3 +1,8 @@
+/**
+ * Unit tests focused on the refresh token API route. The suite simulates cookie extraction,
+ * service success, and various failure conditions to ensure we rotate tokens and surface errors
+ * consistently.
+ */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockAttachRefreshTokenCookie = vi.fn();

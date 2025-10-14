@@ -1,3 +1,7 @@
+/**
+ * Thin bcrypt wrappers for hashing and verifying user passwords. Centralising this logic makes it
+ * easy to adjust cost factors and swap implementations without touching service code.
+ */
 import bcrypt from "bcryptjs";
 
 const DEFAULT_SALT_ROUNDS = 12;

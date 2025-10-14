@@ -1,3 +1,7 @@
+/**
+ * Unit tests for the signup API handler, validating success responses, validation failures, and
+ * error propagation without touching the database. Mocks keep the focus on HTTP-level behavior.
+ */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockAttachRefreshTokenCookie = vi.fn();

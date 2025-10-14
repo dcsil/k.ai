@@ -1,3 +1,7 @@
+/**
+ * Validates the password hashing helpers, covering both successful verification and failure cases
+ * so downstream services can rely on predictable bcrypt behavior.
+ */
 import { describe, expect, it } from "vitest";
 
 const PASSWORD = "Sup3rS3cret!";

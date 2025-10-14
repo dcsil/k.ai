@@ -1,3 +1,8 @@
+/**
+ * POST /api/auth/logout
+ * Revokes the refresh token tied to the incoming cookie (if present) and clears the cookie on the
+ * response. Returning 204 keeps the contract simple for clients.
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { appConfig } from "@/lib/config";
 import { logoutUser } from "@/server/services/authService";

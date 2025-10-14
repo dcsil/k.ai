@@ -1,3 +1,8 @@
+/**
+ * POST /api/auth/verify-email/confirm
+ * Confirms an email verification token issued earlier. authService performs validation and updates
+ * persistence; the handler simply returns 204 or a structured error.
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { confirmEmailVerificationSchema } from "@/lib/validation/auth";
 import { confirmEmailVerification } from "@/server/services/authService";

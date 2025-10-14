@@ -1,3 +1,7 @@
+/**
+ * Converts thrown errors into the standard API error envelope. Supports our custom ApiError class,
+ * Zod validation failures, and logs unexpected issues before returning a generic 500 response.
+ */
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { ApiError, errorResponseBody } from "@/lib/apiError";

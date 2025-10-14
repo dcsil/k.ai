@@ -1,3 +1,7 @@
+/**
+ * Helpers for setting and clearing the refresh token cookie using the configuration defined in
+ * appConfig. Keeping this logic here avoids duplicating cookie flags across routes.
+ */
 import { NextResponse } from "next/server";
 import { appConfig } from "@/lib/config";
 

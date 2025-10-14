@@ -1,3 +1,9 @@
+/**
+ * POST /api/auth/login
+ * Authenticates a user with credentials, then issues an access token response and refresh cookie.
+ * The heavy lifting (validation, Prisma operations) lives in authService; this handler just
+ * prepares HTTP-friendly responses.
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { loginSchema } from "@/lib/validation/auth";
 import { extractRequestContext } from "@/lib/api/context";
