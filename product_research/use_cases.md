@@ -125,7 +125,9 @@ As an emerging artist, I want the platform I use to have a clean and intuitive i
 
 ### CUJ 1
 
-The user can see a timeline on the dashboard (which includes a task list and progress bar) to indicate progress within the current release strategy. This should reflect the overall status of release tasks/activities.
+When the user creates an account, they are guided to enter information about their upcoming release (In this case, it is for a single called "Joy"). Afterwards, they can see the page in the sketch below.
+
+The user can see a timeline on the dashboard (which includes a task list and progress bar) to indicate progress within the current release strategy. This should reflect the overall status of release tasks/activities. Release tasks are auto-generated based on the user's goals for the release.
 
 Computer interface sketch:
 
