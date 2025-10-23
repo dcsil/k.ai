@@ -20,7 +20,7 @@ export default function Dashboard() {
     try {
       const raw = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
       if (raw) return JSON.parse(raw) as Task[];
-    } catch (e) {
+    } catch {
       /* ignore */
     }
     return [];
@@ -30,7 +30,7 @@ export default function Dashboard() {
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-    } catch (e) {
+    } catch {
       // ignore
     }
   }, [tasks]);

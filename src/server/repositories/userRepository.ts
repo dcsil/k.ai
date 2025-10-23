@@ -18,19 +18,19 @@ const userSelect = {
 export type SafeUser = Prisma.UserGetPayload<{ select: typeof userSelect }>;
 
 export async function findUserByEmail(email: string) {
-  return prisma.user.findUnique({ where: { email } });
+  return prisma.user.findUnique({ where: { email }, select: userSelect });
 }
 
 export async function findUserById(id: string) {
-  return prisma.user.findUnique({ where: { id } });
+  return prisma.user.findUnique({ where: { id }, select: userSelect });
 }
 
 export async function createUser(data: Prisma.UserCreateInput) {
-  return prisma.user.create({ data });
+  return prisma.user.create({ data, select: userSelect });
 }
 
 export async function updateUser(id: string, data: Prisma.UserUpdateInput) {
-  return prisma.user.update({ where: { id }, data });
+  return prisma.user.update({ where: { id }, data, select: userSelect });
 }
 
 export function serializeUser(user: User): SafeUser {
