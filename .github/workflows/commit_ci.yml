@@ -29,17 +29,9 @@ jobs:
           node-version: '22'
           cache: 'npm'
 
-      - name: Generate CI env file
-        run: node scripts/generate-env.js
-
-      - name: Install dependencies
+      - name: Setup project (deps, env, prisma)
         shell: bash
-        run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-          else
-            npm install
-          fi
+        run: bash scripts/setup.sh
 
       - name: Run ESLint
         run: npm run lint
