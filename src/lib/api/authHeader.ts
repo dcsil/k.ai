@@ -12,6 +12,7 @@ export function requireAccessToken(request: NextRequest): AccessTokenClaims {
   try {
     return verifyAccessToken(token);
   } catch (error) {
-    throw new ApiError(401, "UNAUTHORIZED", "Access token is invalid or expired");
+    const message = error instanceof Error ? error.message : String(error);
+    throw new ApiError(401, "UNAUTHORIZED", `Access token is invalid or expired: ${message}`);
   }
 }

@@ -1,0 +1,43 @@
+name: Commit CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches-ignore:
+      - "master"
+  pull_request:
+    branches-ignore:
+      - "master"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Lint, Test, and Build
+    runs-on: ubuntu-latest
+    env:
+      NEXT_TELEMETRY_DISABLED: 1
+      CI: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Setup project (deps, env, prisma)
+        shell: bash
+        run: bash scripts/setup.sh
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run tests (Vitest)
+        run: npm test -- --run
+
+      - name: Build project (Next.js)
+        run: npm run build
