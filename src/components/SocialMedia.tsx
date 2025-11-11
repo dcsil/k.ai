@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 
-type Platform = "instagram" | "facebook" | "twitter" | "tiktok";
+type Platform = "instagram" | "facebook" | "x" | "tiktok";
 
 type PostStatus = "draft" | "scheduled" | "published";
 
@@ -285,7 +285,7 @@ function PlatformIcon({ platform }: { platform: Platform }) {
   const icons = {
     instagram: "IG",
     facebook: "FB",
-    twitter: "TW",
+    x: "X",
     tiktok: "TT",
   };
 
@@ -350,7 +350,7 @@ function PostComposer({
           <div>
             <label className="text-sm font-medium block mb-2">Platforms</label>
             <div className="grid grid-cols-4 gap-2">
-              {(["instagram", "facebook", "twitter", "tiktok"] as Platform[]).map(
+              {(["instagram", "facebook", "x", "tiktok"] as Platform[]).map(
                 (platform) => (
                   <button
                     key={platform}
