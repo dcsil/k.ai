@@ -236,7 +236,7 @@ Note: Social login (Google/Apple) is planned for a later phase. Endpoints will b
 
 ## Tasks
 
-### GET /api/releases/{releaseId}/tasks?limit=&cursor=&status=&dueFrom=&dueTo=&priority=&sort=position|dueAt|status|priority&order=asc|desc
+### GET /api/releases/{id}/tasks?limit=&cursor=&status=&dueFrom=&dueTo=&priority=&sort=position|dueAt|status|priority&order=asc|desc
 - Auth: Access token (owner)
 - Response 200:
   ```json
@@ -248,7 +248,7 @@ Note: Social login (Google/Apple) is planned for a later phase. Endpoints will b
   }
   ```
 
-### POST /api/releases/{releaseId}/tasks
+### POST /api/releases/{id}/tasks
 - Auth: Access token (owner)
 - Request:
   ```json
