@@ -1,6 +1,10 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import Calendar from "./Calendar";
+import ReleaseTimeline from "./ReleaseTimeline";
+import SocialMedia from "./SocialMedia";
+import AIChatbot from "./AIChatbot";
 
 type Status = "not_started" | "in_progress" | "completed";
 
@@ -13,9 +17,12 @@ type Task = {
   date?: string;
 };
 
+type Section = "tasks" | "calendar" | "releases" | "social"| "chat";
+
 const STORAGE_KEY = "k_ai_tasks_v1";
 
 export default function Dashboard() {
+  const [currentSection, setCurrentSection] = useState<Section>("tasks");
   const [tasks, setTasks] = useState<Task[]>(() => {
     try {
       const raw = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
@@ -26,7 +33,6 @@ export default function Dashboard() {
     return [];
   });
 
-  // Persist tasks to localStorage whenever they change.
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
@@ -59,7 +65,6 @@ export default function Dashboard() {
     setTasks((s) => s.map((t) => (t.id === id ? { ...t, expanded: !t.expanded } : t)));
   }
 
-  // Toggle if completed
   function toggleComplete(id: string) {
     setTasks((s) =>
       s.map((t) => {
@@ -70,140 +75,231 @@ export default function Dashboard() {
     );
   }
 
-  // Toggle between Not Started and In Progress
   function toggleInProgress(id: string) {
     setTasks((s) =>
       s.map((t) => {
         if (t.id !== id) return t;
-        if (t.status === "completed") return t; // don't change completed via this action
+        if (t.status === "completed") return t;
         return { ...t, status: t.status === "not_started" ? "in_progress" : "not_started" };
       })
     );
   }
 
-  // Save notes text for task
   function updateNotes(id: string, notes: string) {
     setTasks((s) => s.map((t) => (t.id === id ? { ...t, notes } : t)));
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-6">
-      <header className="mb-6">
-        <div className="flex items-center justify-between p-4 bg-card border border-border rounded-lg">
-          <h1 className="text-2xl font-semibold">k.ai Dashboard</h1>
-          <div className="flex gap-3">
-            <button className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md">
-              Placeholder1
-            </button>
-            <button className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md">
-              Placeholder2
-            </button>
-          </div>
+    <div className="min-h-screen bg-background text-foreground flex">
+      <aside className="w-64 bg-card border-r border-border">
+          <div className="p-6">
+          <h1 className="text-2xl font-bold mb-8">k.ai</h1>
+          <nav className="space-y-2">
+            <NavItem
+              label="Tasks"
+              active={currentSection === "tasks"}
+              onClick={() => setCurrentSection("tasks")}
+            />
+            <NavItem
+              label="Calendar"
+              active={currentSection === "calendar"}
+              onClick={() => setCurrentSection("calendar")}
+            />
+            <NavItem
+              label="Releases"
+              active={currentSection === "releases"}
+              onClick={() => setCurrentSection("releases")}
+            />
+            <NavItem
+              label="Social Media"
+              active={currentSection === "social"}
+              onClick={() => setCurrentSection("social")}
+            />
+            <NavItem
+              label="AI"
+              active={currentSection === "chat"}
+              onClick={() => setCurrentSection("chat")}
+            />
+          </nav>
         </div>
-      </header>
+      </aside>
 
-      <div className="max-w-5xl bg-card border border-border rounded-lg overflow-hidden">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Tasks</h2>
-            {tasks.length > 0 && (
-              <div className="px-3 py-1 rounded-md bg-accent-foreground/10 text-accent-foreground font-semibold">
-                {progress}% complete
-              </div>
-            )}
+      <main className="flex-1 overflow-auto">
+        {currentSection === "tasks" && (
+          <TasksSection
+            tasks={tasks}
+            progress={progress}
+            onAddTask={addTask}
+            onDeleteTask={deleteTask}
+            onToggleExpand={toggleExpand}
+            onToggleComplete={toggleComplete}
+            onToggleInProgress={toggleInProgress}
+            onUpdateNotes={updateNotes}
+          />
+        )}
+        {currentSection === "calendar" && <Calendar />}
+        {currentSection === "releases" && <ReleaseTimeline />}
+        {currentSection === "social" && <SocialMedia />}
+        {currentSection === "chat" && <AIChatbot />}
+      </main>
+    </div>
+  );
+}
+
+function NavItem({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
+        active
+          ? "bg-primary text-primary-foreground"
+          : "hover:bg-accent"
+      }`}
+    >
+      <span className="font-medium">{label}</span>
+    </button>
+  );
+}
+
+function TasksSection({
+  tasks,
+  progress,
+  onAddTask,
+  onDeleteTask,
+  onToggleExpand,
+  onToggleComplete,
+  onToggleInProgress,
+  onUpdateNotes,
+}: {
+  tasks: Task[];
+  progress: number;
+  onAddTask: (title: string) => void;
+  onDeleteTask: (id: string) => void;
+  onToggleExpand: (id: string) => void;
+  onToggleComplete: (id: string) => void;
+  onToggleInProgress: (id: string) => void;
+  onUpdateNotes: (id: string, notes: string) => void;
+}) {
+  return (
+    <div className="p-6">
+      <div className="mb-6">
+        <h2 className="text-2xl font-semibold mb-4">Tasks</h2>
+        {tasks.length > 0 && (
+          <div className="px-4 py-2 rounded-lg bg-accent/20 inline-block">
+            <span className="font-semibold">{progress}% complete</span>
           </div>
+        )}
+      </div>
 
-          <div className="flex gap-3 mb-6">
-            <AddTask onAdd={addTask} />
-            <input className="flex-1 px-3 py-2 border border-border rounded-md bg-card-foreground/5" placeholder="Search tasks..." aria-label="Search tasks" />
+      <div className="flex gap-3 mb-6">
+        <AddTask onAdd={onAddTask} />
+        <input
+          className="flex-1 px-3 py-2 border border-border rounded-md bg-card"
+          placeholder="Search tasks..."
+          aria-label="Search tasks"
+        />
+      </div>
+
+      <div className="space-y-4">
+        {tasks.length === 0 && (
+          <div className="text-center py-12 bg-card border border-border rounded-lg">
+            <p className="text-lg text-muted-foreground">No tasks yet. Add one to get started!</p>
           </div>
+        )}
 
-          <div className="space-y-4">
-            {tasks.length === 0 && (
-              <div className="text-center py-8">
-                <p className="text-lg text-muted-foreground">Welcome to k.ai Dashboard! Add a task above.</p>
+        {tasks.map((task) => (
+          <div
+            key={task.id}
+            className="border border-border rounded-lg bg-card overflow-hidden"
+          >
+            <div
+              className="flex items-center gap-3 p-4 cursor-pointer"
+              onClick={() => onToggleExpand(task.id)}
+            >
+              <div className="text-sm text-muted">{task.expanded ? "▼" : "▶"}</div>
+              <input
+                aria-label={`Complete ${task.title}`}
+                type="checkbox"
+                checked={task.status === "completed"}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  onToggleComplete(task.id);
+                }}
+                className="w-4 h-4"
+              />
+              <div className="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground">
+                {task.date ?? "—"}
               </div>
-            )}
+              <div className="flex-1 font-medium">{task.title}</div>
+              <div className="text-sm text-muted">⋯</div>
+            </div>
 
-            {tasks.map((task) => (
-              <div key={task.id} className={`border border-border rounded-md bg-card overflow-hidden ${task.expanded ? "" : ""}`}>
-                <div className="flex items-center gap-3 p-4 cursor-pointer" onClick={() => toggleExpand(task.id)}>
-                  <div className="text-sm text-muted">{task.expanded ? "▼" : "▶"}</div>
-                  <input
-                    aria-label={`Complete ${task.title}`}
-                    type="checkbox"
-                    checked={task.status === "completed"}
-                    onChange={(e) => {
-                      e.stopPropagation();
-                      toggleComplete(task.id);
-                    }}
-                    className="w-4 h-4"
-                  />
-                  <div className="text-xs px-2 py-0.5 rounded bg-card-foreground/5 text-muted">{task.date ?? "—"}</div>
-                  <div className="flex-1 font-medium">{task.title}</div>
-                  <div className="text-sm text-muted">⋯</div>
+            {task.expanded && (
+              <div className="p-4 border-t border-border">
+                <div className="mb-3">
+                  <div className="text-sm font-semibold">Title</div>
+                  <div className="mt-1">{task.title}</div>
                 </div>
 
-                {task.expanded && (
-                  <div className="p-4 border-t border-border bg-popover">
-                    <div className="mb-3">
-                      <div className="text-sm font-semibold">Title</div>
-                      <div className="mt-1">{task.title}</div>
-                    </div>
-
-                    <div className="mb-3">
-                      <div className="text-sm font-semibold">Status</div>
-                      <div className="flex items-center gap-3 mt-2">
-                          <button
-                            aria-label={`Toggle ${task.title} Not Started / In Progress`}
-                            className="focus:outline-none"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleInProgress(task.id);
-                            }}
-                          >
-                            <StatusBadge status={task.status} />
-                          </button>
-                          <label className="flex items-center gap-2 ml-2">
-                          <input
-                            type="checkbox"
-                            checked={task.status === "completed"}
-                            onChange={(e) => {
-                              e.stopPropagation();
-                              toggleComplete(task.id);
-                            }}
-                          />
-                          <span className="text-sm">Mark complete</span>
-                        </label>
-                      </div>
-                    </div>
-
-                    <div className="mb-3">
-                      <div className="text-sm font-semibold">Notes</div>
-                      <textarea
-                        value={task.notes ?? ""}
-                        onChange={(e) => updateNotes(task.id, e.target.value)}
-                        className="w-full min-h-[80px] mt-2 p-2 border border-border rounded-md bg-card-foreground/5"
-                      />
-                    </div>
-
-                    <div className="flex gap-3">
-                      <button
-                        className="px-3 py-1 border border-border rounded text-sm text-red-600"
-                        onClick={(e) => {
+                <div className="mb-3">
+                  <div className="text-sm font-semibold">Status</div>
+                  <div className="flex items-center gap-3 mt-2">
+                    <button
+                      aria-label={`Toggle ${task.title} Not Started / In Progress`}
+                      className="focus:outline-none"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleInProgress(task.id);
+                      }}
+                    >
+                      <StatusBadge status={task.status} />
+                    </button>
+                    <label className="flex items-center gap-2 ml-2">
+                      <input
+                        type="checkbox"
+                        checked={task.status === "completed"}
+                        onChange={(e) => {
                           e.stopPropagation();
-                          deleteTask(task.id);
+                          onToggleComplete(task.id);
                         }}
-                      >
-                        Delete Task
-                      </button>
-                    </div>
+                      />
+                      <span className="text-sm">Mark complete</span>
+                    </label>
                   </div>
-                )}
+                </div>
+
+                <div className="mb-3">
+                  <div className="text-sm font-semibold">Notes</div>
+                  <textarea
+                    value={task.notes ?? ""}
+                    onChange={(e) => onUpdateNotes(task.id, e.target.value)}
+                    className="w-full min-h-[80px] mt-2 p-2 border border-border rounded-md bg-background"
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    className="px-3 py-1 border border-border rounded text-sm text-red-600"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteTask(task.id);
+                    }}
+                  >
+                    Delete Task
+                  </button>
+                </div>
               </div>
-            ))}
+            )}
           </div>
-        </div>
+        ))}
       </div>
     </div>
   );
@@ -222,7 +318,7 @@ function AddTask({ onAdd }: { onAdd: (title: string) => void }) {
       className="flex gap-2"
     >
       <input
-        className="px-3 py-2 border border-border rounded-md bg-card-foreground/5 w-80"
+        className="px-3 py-2 border border-border rounded-md bg-card w-80"
         placeholder="New task title..."
         value={value}
         onChange={(e) => setValue(e.target.value)}
