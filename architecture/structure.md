@@ -70,7 +70,7 @@ Goals:
 │  │  │  ├─ releases/route.ts      # GET, POST
 │  │  │  ├─ releases/[id]/route.ts # GET, PATCH, DELETE
 │  │  │  ├─ releases/[id]/progress/route.ts
-│  │  │  ├─ releases/[releaseId]/tasks/route.ts         # GET, POST
+│  │  │  ├─ releases/[id]/tasks/route.ts                # GET, POST
 │  │  │  ├─ tasks/[taskId]/route.ts                     # PATCH, DELETE
 │  │  │  ├─ tasks/[taskId]/complete/route.ts
 │  │  │  ├─ tasks/[taskId]/uncomplete/route.ts
@@ -121,8 +121,8 @@ Goals:
 │  │  ├─ crypto.ts                   # encryption helpers for OAuth tokens (planned)
 │  │  ├─ email.ts                    # email sending (reset/verify) (planned)
 │  │  ├─ rateLimit.ts                # reusable rate limiter util (planned)
-│  │  ├─ pagination.ts               # cursor helpers (planned)
-│  │  ├─ validation/                 # zod schemas for REST payloads (planned)
+│  │  ├─ pagination.ts               # cursor helpers (opaque base64)
+│  │  ├─ validation/                 # zod schemas for REST payloads (auth, release, task)
 │  │  ├─ error.ts                    # error classes/formatting (planned)
 │  │  ├─ logger.ts                   # pino/console wrapper (planned)
 │  ├─ server/                        # Server-only domain logic
@@ -132,15 +132,15 @@ Goals:
 │  │  │  ├─ passwordResetTokenRepository.ts
 │  │  │  ├─ emailVerificationTokenRepository.ts
 │  │  │  ├─ loginAttemptRepository.ts
-│  │  │  ├─ releaseRepo.ts           # planned
-│  │  │  ├─ taskRepo.ts              # planned
+│  │  │  ├─ releaseRepository.ts     # ReleaseStrategy DB access
+│  │  │  ├─ taskRepository.ts        # Task DB access
 │  │  │  ├─ socialRepo.ts            # planned
 │  │  │  ├─ mediaRepo.ts             # planned
 │  │  │  └─ billingRepo.ts           # planned
 │  │  ├─ services/                   # Business logic/use-cases
 │  │  │  ├─ authService.ts
-│  │  │  ├─ releaseService.ts        # planned
-│  │  │  ├─ taskService.ts           # planned
+│  │  │  ├─ releaseService.ts        # business logic for releases
+│  │  │  ├─ taskService.ts           # business logic for tasks
 │  │  │  ├─ postService.ts           # Compose platform posting, validations (planned)
 │  │  │  ├─ socialAccountService.ts  # planned
 │  │  │  ├─ mediaService.ts          # planned
