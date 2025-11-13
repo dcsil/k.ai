@@ -20,7 +20,8 @@ export async function POST(req: NextRequest) {
       contents,
     });
 
-    const text = (result as any)?.text ?? (result as any)?.candidates?.[0]?.content?.text ?? JSON.stringify(result);
+    const response = result as { text?: string; candidates?: Array<{ content?: { text?: string } }> };
+    const text = response.text || response.candidates?.[0]?.content?.text || JSON.stringify(result);
 
     return new Response(JSON.stringify({ text }), { headers: { "Content-Type": "application/json" } });
   } catch (err) {
