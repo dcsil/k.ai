@@ -35,11 +35,12 @@ vi.mock("@/server/services/releaseService", () => ({
   getTaskUsageForRelease: mockGetUsage,
 }));
 
-function params(id: string) {
-  return { params: Promise.resolve({ id }) } as any;
+function params(id: string): { params: Promise<{ id: string }> } {
+  return { params: Promise.resolve({ id }) };
 }
-function makeRequest(url: string, body?: unknown) {
-  return { url, json: async () => body, headers: new Headers() } as any;
+type MinimalRequest = { url: string; json: () => Promise<unknown>; headers: Headers };
+function makeRequest(url: string, body?: unknown): MinimalRequest {
+  return { url, json: async () => body, headers: new Headers() };
 }
 
 describe("/api/releases/[id]/tasks", () => {
@@ -55,7 +56,7 @@ describe("/api/releases/[id]/tasks", () => {
     const req = makeRequest(
       "https://app.local/api/releases/r1/tasks?limit=5&status=NOT_STARTED&sort=position&order=asc",
     );
-    const res = (await GET(req, params("r1"))) as Response;
+    const res = (await GET(req as never, params("r1"))) as Response;
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ items: [], nextCursor: null });
     expect(mockListTasks).toHaveBeenCalledWith({
@@ -70,7 +71,7 @@ describe("/api/releases/[id]/tasks", () => {
     mockGetUsage.mockResolvedValue(500);
     const { POST } = await import("@/app/api/releases/[id]/tasks/route");
     const req = makeRequest("https://app.local/api/releases/r1/tasks", { title: "Task" });
-    const res = (await POST(req, params("r1"))) as Response;
+    const res = (await POST(req as never, params("r1"))) as Response;
     expect(res.status).toBe(409);
     const headers = res.headers;
     expect(headers.get("X-Plan-Limit")).toBe("500");
@@ -88,7 +89,7 @@ describe("/api/releases/[id]/tasks", () => {
     mockCreateTask.mockResolvedValue({ id: "t1", title: "Task" });
     const { POST } = await import("@/app/api/releases/[id]/tasks/route");
     const req = makeRequest("https://app.local/api/releases/r1/tasks", { title: "Task" });
-    const res = (await POST(req, params("r1"))) as Response;
+    const res = (await POST(req as never, params("r1"))) as Response;
     expect(res.status).toBe(201);
     expect(await res.json()).toEqual({ id: "t1", title: "Task" });
     expect(res.headers.get("X-Plan-Limit")).toBe("500");

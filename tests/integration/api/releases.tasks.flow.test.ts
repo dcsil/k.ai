@@ -45,11 +45,18 @@ function buildAuthRequest(url: string, init?: { method?: string; json?: unknown;
   });
 }
 
-function paramsId(id: string) {
-  return { params: Promise.resolve({ id }) } as any;
+type RouteParams<T extends string> = { params: Promise<Record<T, string>> };
+function paramsId(id: string): RouteParams<"id"> {
+  return { params: Promise.resolve({ id }) };
 }
-function paramsTask(taskId: string) {
-  return { params: Promise.resolve({ taskId }) } as any;
+function paramsTask(taskId: string): RouteParams<"taskId"> {
+  return { params: Promise.resolve({ taskId }) };
+}
+
+type WithId = { id: string };
+
+declare global {
+  var __cleanup: undefined | (() => void);
 }
 
 describe.sequential("Releases + Tasks API integration", () => {
@@ -57,7 +64,7 @@ describe.sequential("Releases + Tasks API integration", () => {
     const jwtSecret = ensureTestJwtSecret();
     const { cleanup } = cloneSqliteDatabase({ prefix: "rel-task-flow" });
     // Persist cleanup on global to run afterAll
-    (globalThis as any).__cleanup = cleanup;
+    globalThis.__cleanup = cleanup;
 
     resetPrismaClientSingleton();
     const prismaModule = await import("@/lib/prisma");
@@ -96,7 +103,7 @@ describe.sequential("Releases + Tasks API integration", () => {
 
   afterAll(async () => {
     await prisma.$disconnect();
-    (globalThis as any).__cleanup?.();
+    globalThis.__cleanup?.();
   });
 
   it("end-to-end release and task operations with errors", async () => {
@@ -140,7 +147,7 @@ describe.sequential("Releases + Tasks API integration", () => {
       )) as Response;
       expect(listRes.status).toBe(200);
       const listBody = await listRes.json();
-      expect(listBody.items.some((r: any) => r.id === releaseId)).toBe(true);
+      expect(listBody.items.some((r: WithId) => r.id === releaseId)).toBe(true);
 
       const getRes = (await releaseGet(buildAuthRequest("http://localhost/api/releases/" + releaseId) as never, paramsId(releaseId))) as Response;
       expect(getRes.status).toBe(200);
@@ -158,7 +165,7 @@ describe.sequential("Releases + Tasks API integration", () => {
     }
 
     // List tasks with pagination (limit=2)
-    let allTaskIds: string[] = [];
+    const allTaskIds: string[] = [];
     {
       const first = (await relTasksGet(
         buildAuthRequest(`http://localhost/api/releases/${releaseId}/tasks?limit=2&sort=position&order=asc`) as never,
@@ -167,7 +174,7 @@ describe.sequential("Releases + Tasks API integration", () => {
       expect(first.status).toBe(200);
       const firstBody = await first.json();
       expect(Array.isArray(firstBody.items)).toBe(true);
-      allTaskIds.push(...firstBody.items.map((t: any) => t.id));
+      allTaskIds.push(...(firstBody.items as WithId[]).map((t) => t.id));
       if (firstBody.nextCursor) {
         const second = (await relTasksGet(
           buildAuthRequest(
@@ -177,7 +184,7 @@ describe.sequential("Releases + Tasks API integration", () => {
         )) as Response;
         expect(second.status).toBe(200);
         const secondBody = await second.json();
-        allTaskIds.push(...secondBody.items.map((t: any) => t.id));
+        allTaskIds.push(...(secondBody.items as WithId[]).map((t) => t.id));
       }
       expect(allTaskIds.length).toBeGreaterThanOrEqual(3);
     }

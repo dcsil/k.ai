@@ -23,8 +23,8 @@ vi.mock("@/lib/api/authHeader", () => ({ requireAccessToken: mockRequireAccessTo
 vi.mock("@/lib/api/errorResponse", () => ({ respondWithError: mockRespondWithError }));
 vi.mock("@/server/services/releaseService", () => ({ computeReleaseProgress: mockComputeProgress }));
 
-function params(id: string) {
-  return { params: Promise.resolve({ id }) } as any;
+function params(id: string): { params: Promise<{ id: string }> } {
+  return { params: Promise.resolve({ id }) };
 }
 
 describe("POST /api/releases/[id]/progress", () => {

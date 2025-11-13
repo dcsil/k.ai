@@ -27,8 +27,8 @@ vi.mock("@/server/services/taskService", () => ({
   deleteTaskService: mockDeleteTask,
 }));
 
-function params(taskId: string) {
-  return { params: Promise.resolve({ taskId }) } as any;
+function params(taskId: string): { params: Promise<{ taskId: string }> } {
+  return { params: Promise.resolve({ taskId }) };
 }
 
 describe("/api/tasks/[taskId]", () => {
@@ -41,8 +41,9 @@ describe("/api/tasks/[taskId]", () => {
   it("PATCH updates a task and returns 200", async () => {
     mockUpdateTask.mockResolvedValue({ id: "t1", title: "New" });
     const { PATCH } = await import("@/app/api/tasks/[taskId]/route");
-    const req = { json: async () => ({ title: "New" }) } as any;
-    const res = (await PATCH(req, params("t1"))) as Response;
+    type MinimalJsonRequest = { json: () => Promise<unknown> };
+    const req: MinimalJsonRequest = { json: async () => ({ title: "New" }) };
+    const res = (await PATCH(req as never, params("t1"))) as Response;
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ id: "t1", title: "New" });
     expect(mockUpdateTask).toHaveBeenCalledWith({ userId: "user-1", taskId: "t1", input: { title: "New" } });

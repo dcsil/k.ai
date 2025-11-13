@@ -23,8 +23,9 @@ vi.mock("@/lib/api/authHeader", () => ({ requireAccessToken: mockRequireAccessTo
 vi.mock("@/lib/api/errorResponse", () => ({ respondWithError: mockRespondWithError }));
 vi.mock("@/server/services/taskService", () => ({ reorderTasksService: mockReorderTasks }));
 
-function makeRequest(body: unknown) {
-  return { json: async () => body } as any;
+type MinimalJsonRequest = { json: () => Promise<unknown> };
+function makeRequest(body: unknown): MinimalJsonRequest {
+  return { json: async () => body };
 }
 
 describe("POST /api/tasks/reorder", () => {

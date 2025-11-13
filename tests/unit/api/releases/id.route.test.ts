@@ -29,8 +29,8 @@ vi.mock("@/server/services/releaseService", () => ({
   deleteReleaseService: mockDeleteRelease,
 }));
 
-function params(id: string) {
-  return { params: Promise.resolve({ id }) } as any;
+function params(id: string): { params: Promise<{ id: string }> } {
+  return { params: Promise.resolve({ id }) };
 }
 
 describe("/api/releases/[id]", () => {
@@ -52,8 +52,9 @@ describe("/api/releases/[id]", () => {
   it("PATCH updates a release", async () => {
     mockPatchRelease.mockResolvedValue({ id: "r1", name: "New" });
     const { PATCH } = await import("@/app/api/releases/[id]/route");
-    const req = { json: async () => ({ name: "New" }) } as any;
-    const res = (await PATCH(req, params("r1"))) as Response;
+    type MinimalJsonRequest = { json: () => Promise<unknown> };
+    const req: MinimalJsonRequest = { json: async () => ({ name: "New" }) };
+    const res = (await PATCH(req as never, params("r1"))) as Response;
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ id: "r1", name: "New" });
     expect(mockPatchRelease).toHaveBeenCalledWith({ userId: "user-1", id: "r1", data: { name: "New" } });

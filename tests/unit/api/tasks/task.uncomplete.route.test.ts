@@ -23,8 +23,8 @@ vi.mock("@/lib/api/authHeader", () => ({ requireAccessToken: mockRequireAccessTo
 vi.mock("@/lib/api/errorResponse", () => ({ respondWithError: mockRespondWithError }));
 vi.mock("@/server/services/taskService", () => ({ uncompleteTaskService: mockUncompleteTask }));
 
-function params(taskId: string) {
-  return { params: Promise.resolve({ taskId }) } as any;
+function params(taskId: string): { params: Promise<{ taskId: string }> } {
+  return { params: Promise.resolve({ taskId }) };
 }
 
 describe("POST /api/tasks/[taskId]/uncomplete", () => {
