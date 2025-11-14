@@ -1,0 +1,65 @@
+/* Simple styles for AuthForm. Adjust as needed for your design system. */
+.auth-form-container {
+  max-width: 400px;
+  margin: 40px auto;
+  padding: 32px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+}
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.auth-form h2 {
+  margin-bottom: 8px;
+  font-size: 1.5rem;
+  text-align: center;
+}
+.auth-form input {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+.auth-form button {
+  padding: 10px;
+  background: #0070f3;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.auth-form button:hover {
+  background: #0059c9;
+}
+.auth-error {
+  color: #d32f2f;
+  font-size: 0.95rem;
+  text-align: center;
+}
+.sso-section {
+  margin-top: 24px;
+  text-align: center;
+}
+.sso-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+.sso-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background: #eee;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.2s;
+}
+.sso-btn:hover {
+  background: #ddd;
+}
