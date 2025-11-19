@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 
 type CalendarView = "day" | "week" | "month";
 
@@ -12,45 +12,104 @@ type CalendarEvent = {
   endTime: string;
   description?: string;
   recurring?: "none" | "daily" | "weekly" | "monthly";
-  color?: string;
+  type: "event" | "task";
+  taskStatus?: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
 };
 
-const STORAGE_KEY = "k_ai_calendar_v1";
+const STORAGE_KEY = "k_ai_calendar_events_v1";
 
 export default function Calendar() {
   const [view, setView] = useState<CalendarView>("month");
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [events, setEvents] = useState<CalendarEvent[]>(() => {
+  const [manualEvents, setManualEvents] = useState<CalendarEvent[]>(() => {
     try {
-      const raw = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
+      const raw =
+        typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
       if (raw) return JSON.parse(raw) as CalendarEvent[];
     } catch {
       /* ignore */
     }
     return [];
   });
+  const [tasks, setTasks] = useState<CalendarEvent[]>([]);
   const [showAddEvent, setShowAddEvent] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>("");
 
-  React.useEffect(() => {
+  // Fetch tasks from API
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  // Save manual events to localStorage
+  useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(manualEvents));
     } catch {
       // ignore
     }
-  }, [events]);
+  }, [manualEvents]);
 
-  function addEvent(event: Omit<CalendarEvent, "id">) {
+  async function fetchTasks() {
+    try {
+      const releasesRes = await fetch("/api/releases", {
+        credentials: "include",
+      });
+      
+      if (!releasesRes.ok) return;
+      
+      const releasesData = await releasesRes.json();
+      const releases = releasesData.items || [];
+
+      const allTasks: CalendarEvent[] = [];
+      
+      for (const release of releases) {
+        const tasksRes = await fetch(`/api/releases/${release.id}/tasks`, {
+          credentials: "include",
+        });
+        
+        if (tasksRes.ok) {
+          const tasksData = await tasksRes.json();
+          const releaseTasks = (tasksData.items || [])
+            .filter((t: any) => t.dueDate)
+            .map((t: any) => ({
+              id: `task-${t.id}`,
+              title: t.title,
+              date: t.dueDate.split("T")[0],
+              startTime: "09:00",
+              endTime: "10:00",
+              description: t.description || "",
+              recurring: "none" as const,
+              type: "task" as const,
+              taskStatus: t.status,
+            }));
+          allTasks.push(...releaseTasks);
+        }
+      }
+
+      setTasks(allTasks);
+    } catch (error) {
+      console.error("Failed to fetch tasks:", error);
+    }
+  }
+
+  const allEvents = [...manualEvents, ...tasks];
+
+  function addEvent(event: Omit<CalendarEvent, "id" | "type">) {
     const newEvent: CalendarEvent = {
       ...event,
-      id: Date.now().toString(),
+      id: `event-${Date.now()}`,
+      type: "event",
     };
-    setEvents((prev) => [...prev, newEvent]);
+    setManualEvents((prev) => [...prev, newEvent]);
     setShowAddEvent(false);
   }
 
   function deleteEvent(id: string) {
-    setEvents((prev) => prev.filter((e) => e.id !== id));
+    if (id.startsWith("task-")) {
+      // Can't delete tasks from calendar now
+      return;
+    }
+    setManualEvents((prev) => prev.filter((e) => e.id !== id));
   }
 
   const monthDays = useMemo(() => {
@@ -73,7 +132,7 @@ export default function Calendar() {
   }, [currentDate]);
 
   function getEventsForDate(dateStr: string) {
-    return events.filter((e) => e.date === dateStr);
+    return allEvents.filter((e) => e.date === dateStr);
   }
 
   function nextPeriod() {
@@ -106,11 +165,19 @@ export default function Calendar() {
 
   const displayTitle = useMemo(() => {
     if (view === "month") {
-      return currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+      return currentDate.toLocaleDateString("en-US", {
+        month: "long",
+        year: "numeric",
+      });
     } else if (view === "week") {
       return `Week of ${currentDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
     } else {
-      return currentDate.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+      return currentDate.toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      });
     }
   }, [view, currentDate]);
 
@@ -123,7 +190,7 @@ export default function Calendar() {
             setSelectedDate(new Date().toISOString().split("T")[0]);
             setShowAddEvent(true);
           }}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
         >
           Add Event
         </button>
@@ -131,13 +198,22 @@ export default function Calendar() {
 
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button onClick={prevPeriod} className="px-3 py-1 border border-border rounded-md">
+          <button
+            onClick={prevPeriod}
+            className="px-3 py-1 border border-border rounded-md hover:bg-accent"
+          >
             ←
           </button>
-          <button onClick={today} className="px-3 py-1 border border-border rounded-md">
+          <button
+            onClick={today}
+            className="px-3 py-1 border border-border rounded-md hover:bg-accent"
+          >
             Today
           </button>
-          <button onClick={nextPeriod} className="px-3 py-1 border border-border rounded-md">
+          <button
+            onClick={nextPeriod}
+            className="px-3 py-1 border border-border rounded-md hover:bg-accent"
+          >
             →
           </button>
           <span className="ml-3 font-semibold">{displayTitle}</span>
@@ -146,19 +222,31 @@ export default function Calendar() {
         <div className="flex gap-2">
           <button
             onClick={() => setView("day")}
-            className={`px-3 py-1 rounded-md ${view === "day" ? "bg-primary text-primary-foreground" : "border border-border"}`}
+            className={`px-3 py-1 rounded-md ${
+              view === "day"
+                ? "bg-primary text-primary-foreground"
+                : "border border-border hover:bg-accent"
+            }`}
           >
             Day
           </button>
           <button
             onClick={() => setView("week")}
-            className={`px-3 py-1 rounded-md ${view === "week" ? "bg-primary text-primary-foreground" : "border border-border"}`}
+            className={`px-3 py-1 rounded-md ${
+              view === "week"
+                ? "bg-primary text-primary-foreground"
+                : "border border-border hover:bg-accent"
+            }`}
           >
             Week
           </button>
           <button
             onClick={() => setView("month")}
-            className={`px-3 py-1 rounded-md ${view === "month" ? "bg-primary text-primary-foreground" : "border border-border"}`}
+            className={`px-3 py-1 rounded-md ${
+              view === "month"
+                ? "bg-primary text-primary-foreground"
+                : "border border-border hover:bg-accent"
+            }`}
           >
             Month
           </button>
@@ -169,7 +257,7 @@ export default function Calendar() {
         <MonthView
           monthDays={monthDays}
           currentDate={currentDate}
-          events={events}
+          events={allEvents}
           getEventsForDate={getEventsForDate}
           onDateClick={(date) => {
             setSelectedDate(date);
@@ -182,7 +270,7 @@ export default function Calendar() {
       {view === "week" && (
         <WeekView
           currentDate={currentDate}
-          events={events}
+          events={allEvents}
           onDateClick={(date) => {
             setSelectedDate(date);
             setShowAddEvent(true);
@@ -194,7 +282,7 @@ export default function Calendar() {
       {view === "day" && (
         <DayView
           currentDate={currentDate}
-          events={events}
+          events={allEvents}
           onDeleteEvent={deleteEvent}
         />
       )}
@@ -237,7 +325,12 @@ function MonthView({
       <div className="grid grid-cols-7">
         {monthDays.map((day, i) => {
           if (day === null) {
-            return <div key={`empty-${i}`} className="border-b border-r border-border p-2 h-24 bg-muted/20" />;
+            return (
+              <div
+                key={`empty-${i}`}
+                className="border-b border-r border-border p-2 h-24 bg-muted/20"
+              />
+            );
           }
 
           const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -254,14 +347,21 @@ function MonthView({
                 {dayEvents.slice(0, 2).map((event) => (
                   <div
                     key={event.id}
-                    className="text-xs px-1 py-0.5 bg-primary/20 rounded truncate"
+                    className={`text-xs px-1 py-0.5 rounded truncate ${
+                      event.type === "task"
+                        ? "bg-blue-100 text-blue-800"
+                        : "bg-primary/20"
+                    }`}
                     onClick={(e) => e.stopPropagation()}
                   >
+                    {event.type === "task" && "📋 "}
                     {event.title}
                   </div>
                 ))}
                 {dayEvents.length > 2 && (
-                  <div className="text-xs text-muted-foreground">+{dayEvents.length - 2} more</div>
+                  <div className="text-xs text-muted-foreground">
+                    +{dayEvents.length - 2} more
+                  </div>
                 )}
               </div>
             </div>
@@ -300,7 +400,9 @@ function WeekView({
       <div className="grid grid-cols-7 border-b border-border">
         {weekDays.map((day) => (
           <div key={day.toISOString()} className="p-3 text-center">
-            <div className="text-sm font-semibold">{day.toLocaleDateString("en-US", { weekday: "short" })}</div>
+            <div className="text-sm font-semibold">
+              {day.toLocaleDateString("en-US", { weekday: "short" })}
+            </div>
             <div className="text-lg">{day.getDate()}</div>
           </div>
         ))}
@@ -320,13 +422,22 @@ function WeekView({
                 {dayEvents.map((event) => (
                   <div
                     key={event.id}
-                    className="text-xs px-2 py-1 bg-primary/20 rounded"
+                    className={`text-xs px-2 py-1 rounded ${
+                      event.type === "task"
+                        ? "bg-blue-100 text-blue-800"
+                        : "bg-primary/20"
+                    }`}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="font-medium">{event.title}</div>
-                    <div className="text-muted-foreground">
-                      {event.startTime} - {event.endTime}
+                    <div className="font-medium">
+                      {event.type === "task" && "📋 "}
+                      {event.title}
                     </div>
+                    {event.type === "event" && (
+                      <div className="text-muted-foreground">
+                        {event.startTime} - {event.endTime}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -348,42 +459,75 @@ function DayView({
   onDeleteEvent: (id: string) => void;
 }) {
   const dateStr = currentDate.toISOString().split("T")[0];
-  const dayEvents = events.filter((e) => e.date === dateStr).sort((a, b) => a.startTime.localeCompare(b.startTime));
+  const dayEvents = events
+    .filter((e) => e.date === dateStr)
+    .sort((a, b) => a.startTime.localeCompare(b.startTime));
 
   return (
     <div className="bg-card border border-border rounded-lg p-6">
       <div className="space-y-3">
         {dayEvents.length === 0 && (
-          <p className="text-center text-muted-foreground py-8">No events scheduled for this day</p>
+          <p className="text-center text-muted-foreground py-8">
+            No events or tasks scheduled for this day
+          </p>
         )}
         {dayEvents.map((event) => (
           <div key={event.id} className="border border-border rounded-lg p-4">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <div className="font-semibold text-lg">{event.title}</div>
+                <div className="flex items-center gap-2">
+                  {event.type === "task" && (
+                    <span className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-800">
+                      Task
+                    </span>
+                  )}
+                  <div className="font-semibold text-lg">{event.title}</div>
+                </div>
                 <div className="text-sm text-muted-foreground mt-1">
                   {event.startTime} - {event.endTime}
                 </div>
                 {event.description && (
                   <div className="mt-2 text-sm">{event.description}</div>
                 )}
-                {event.recurring !== "none" && (
-                  <div className="mt-2 text-xs bg-accent/20 px-2 py-1 rounded inline-block">
-                    Repeats {event.recurring}
+                {event.taskStatus && (
+                  <div className="mt-2">
+                    <TaskStatusBadge status={event.taskStatus} />
                   </div>
                 )}
               </div>
-              <button
-                onClick={() => onDeleteEvent(event.id)}
-                className="text-red-600 text-sm px-2 py-1 hover:bg-red-50 rounded"
-              >
-                Delete
-              </button>
+              {event.type === "event" && (
+                <button
+                  onClick={() => onDeleteEvent(event.id)}
+                  className="text-red-600 text-sm px-2 py-1 hover:bg-red-50 rounded"
+                >
+                  Delete
+                </button>
+              )}
             </div>
           </div>
         ))}
       </div>
     </div>
+  );
+}
+
+function TaskStatusBadge({ status }: { status: string }) {
+  if (status === "COMPLETED")
+    return (
+      <span className="px-2 py-1 rounded bg-green-100 text-green-800 text-xs">
+        Completed
+      </span>
+    );
+  if (status === "IN_PROGRESS")
+    return (
+      <span className="px-2 py-1 rounded bg-yellow-100 text-yellow-800 text-xs">
+        In Progress
+      </span>
+    );
+  return (
+    <span className="px-2 py-1 rounded bg-gray-100 text-gray-800 text-xs">
+      Not Started
+    </span>
   );
 }
 
@@ -394,14 +538,16 @@ function AddEventModal({
 }: {
   selectedDate: string;
   onClose: () => void;
-  onAdd: (event: Omit<CalendarEvent, "id">) => void;
+  onAdd: (event: Omit<CalendarEvent, "id" | "type">) => void;
 }) {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(selectedDate);
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("10:00");
   const [description, setDescription] = useState("");
-  const [recurring, setRecurring] = useState<"none" | "daily" | "weekly" | "monthly">("none");
+  const [recurring, setRecurring] = useState<
+    "none" | "daily" | "weekly" | "monthly"
+  >("none");
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -423,13 +569,16 @@ function AddEventModal({
         <h3 className="text-xl font-semibold mb-4">Add Event</h3>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-sm font-medium block mb-1">Event Title</label>
+            <label className="text-sm font-medium block mb-1">
+              Event Title
+            </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full px-3 py-2 border border-border rounded-md bg-background"
               required
+              autoFocus
             />
           </div>
 
@@ -446,7 +595,9 @@ function AddEventModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-sm font-medium block mb-1">Start Time</label>
+              <label className="text-sm font-medium block mb-1">
+                Start Time
+              </label>
               <input
                 type="time"
                 value={startTime}
@@ -455,7 +606,9 @@ function AddEventModal({
               />
             </div>
             <div>
-              <label className="text-sm font-medium block mb-1">End Time</label>
+              <label className="text-sm font-medium block mb-1">
+                End Time
+              </label>
               <input
                 type="time"
                 value={endTime}
@@ -466,7 +619,9 @@ function AddEventModal({
           </div>
 
           <div>
-            <label className="text-sm font-medium block mb-1">Description</label>
+            <label className="text-sm font-medium block mb-1">
+              Description
+            </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -478,7 +633,11 @@ function AddEventModal({
             <label className="text-sm font-medium block mb-1">Recurring</label>
             <select
               value={recurring}
-              onChange={(e) => setRecurring(e.target.value as "none" | "daily" | "weekly" | "monthly")}
+              onChange={(e) =>
+                setRecurring(
+                  e.target.value as "none" | "daily" | "weekly" | "monthly"
+                )
+              }
               className="w-full px-3 py-2 border border-border rounded-md bg-background"
             >
               <option value="none">Does not repeat</option>
@@ -492,13 +651,13 @@ function AddEventModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-border rounded-md"
+              className="flex-1 px-4 py-2 border border-border rounded-md hover:bg-accent"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md"
+              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
             >
               Add Event
             </button>

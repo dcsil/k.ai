@@ -18,6 +18,7 @@ type AuthContextType = {
   signup: (email: string, password: string, displayName?: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshAuth: () => Promise<void>;
+  getAccessToken: () => string | null;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -113,8 +114,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push("/login");
   }
 
+  function getAccessToken() {
+    return accessToken;
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout, refreshAuth }}>
+    <AuthContext.Provider value={{ user, loading, login, signup, logout, refreshAuth, getAccessToken }}>
       {children}
     </AuthContext.Provider>
   );
@@ -126,9 +131,4 @@ export function useAuth() {
     throw new Error("useAuth must be used within AuthProvider");
   }
   return context;
-}
-
-export function getAccessToken() {
-  // helper for API calls
-  return null;
 }
