@@ -20,16 +20,6 @@ export default function AIChatbot() {
   const [context, setContext] = useState<string>("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Fetch user context (tasks + releases) on mount
-  useEffect(() => {
-    fetchUserContext();
-  }, []);
-
-  // Autoscroll to bottom when new messages arrive
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
   async function fetchUserContext() {
     try {
       const token = getAccessToken();
@@ -70,7 +60,7 @@ export default function AIChatbot() {
               const tasks = tasksData.items || [];
               if (tasks.length > 0) {
                 contextText += `  Tasks:\n`;
-                tasks.forEach((task: any) => {
+                tasks.forEach((task: { title: string; status: string }) => {
                   contextText += `    - ${task.title} (${task.status})\n`;
                 });
               }
@@ -84,6 +74,16 @@ export default function AIChatbot() {
       console.error("Failed to fetch context:", error);
     }
   }
+
+  // Fetch user context (tasks + releases) on mount
+  useEffect(() => {
+    fetchUserContext();
+  }, [getAccessToken]);
+
+  // Autoscroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   async function sendMessage() {
     if (!input.trim() || loading) return;

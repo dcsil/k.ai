@@ -20,27 +20,22 @@ type Task = {
   expanded?: boolean;
 };
 
+type Release = {
+  id: string;
+  name: string;
+  status: string;
+  targetReleaseDate?: string | null;
+};
+
 type Section = "tasks" | "calendar" | "releases" | "social" | "chat";
 
 export default function Dashboard() {
   const { user, logout, getAccessToken } = useAuth();
   const [currentSection, setCurrentSection] = useState<Section>("tasks");
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [releases, setReleases] = useState<any[]>([]);
+  const [releases, setReleases] = useState<Release[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedReleaseId, setSelectedReleaseId] = useState<string>("");
-
-  // Fetch releases on mount
-  useEffect(() => {
-    fetchReleases();
-  }, []);
-
-  // Fetch tasks when release is selected
-  useEffect(() => {
-    if (selectedReleaseId) {
-      fetchTasks(selectedReleaseId);
-    }
-  }, [selectedReleaseId]);
 
   async function fetchReleases() {
     try {
@@ -88,6 +83,18 @@ export default function Dashboard() {
       console.error("Failed to fetch tasks:", error);
     }
   }
+
+  // Fetch releases on mount
+  useEffect(() => {
+    fetchReleases();
+  }, [getAccessToken]);
+
+  // Fetch tasks when release is selected
+  useEffect(() => {
+    if (selectedReleaseId) {
+      fetchTasks(selectedReleaseId);
+    }
+  }, [selectedReleaseId, getAccessToken]);
 
   async function addTask(title: string) {
     if (!title.trim() || !selectedReleaseId) return;
@@ -348,7 +355,7 @@ function TasksSection({
 }: {
   tasks: Task[];
   progress: number;
-  releases: any[];
+  releases: Release[];
   selectedReleaseId: string;
   onSelectRelease: (id: string) => void;
   onAddTask: (title: string) => void;

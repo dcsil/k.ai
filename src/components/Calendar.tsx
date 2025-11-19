@@ -70,8 +70,8 @@ export default function Calendar() {
         if (tasksRes.ok) {
           const tasksData = await tasksRes.json();
           const releaseTasks = (tasksData.items || [])
-            .filter((t: any) => t.dueDate)
-            .map((t: any) => ({
+            .filter((t: { dueDate?: string }) => t.dueDate)
+            .map((t: { id: string; title: string; dueDate: string; description?: string; status: string }) => ({
               id: `task-${t.id}`,
               title: t.title,
               date: t.dueDate.split("T")[0],
@@ -301,10 +301,8 @@ export default function Calendar() {
 function MonthView({
   monthDays,
   currentDate,
-  events,
   getEventsForDate,
   onDateClick,
-  onDeleteEvent,
 }: {
   monthDays: (number | null)[];
   currentDate: Date;
@@ -376,7 +374,6 @@ function WeekView({
   currentDate,
   events,
   onDateClick,
-  onDeleteEvent,
 }: {
   currentDate: Date;
   events: CalendarEvent[];
