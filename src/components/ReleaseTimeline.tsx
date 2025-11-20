@@ -2,110 +2,155 @@
 
 import React, { useState, useEffect } from "react";
 
-type ReleaseStatus = "planning" | "in_progress" | "completed";
+type ReleaseStatus = "PLANNING" | "IN_PROGRESS" | "COMPLETED";
 
 type Release = {
   id: string;
-  title: string;
-  artist: string;
-  releaseDate: string;
+  name: string;
+  targetReleaseDate?: string | null;
   status: ReleaseStatus;
-  milestones: Milestone[];
-  notes?: string;
-  coverArtUrl?: string;
+  archived: boolean;
+  createdAt: string;
+  updatedAt: string;
 };
 
-type Milestone = {
-  id: string;
-  title: string;
-  dueDate: string;
-  completed: boolean;
-};
+import { useAuth } from "@/components/AuthContext";
 
-const STORAGE_KEY = "k_ai_releases_v1";
-
-export default function ReleaseTimeline() {
-  const [releases, setReleases] = useState<Release[]>(() => {
-    try {
-      const raw = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
-      if (raw) return JSON.parse(raw) as Release[];
-    } catch {
-      /* ignore */
-    }
-    return [];
-  });
-
+export default function ReleaseTimeline({
+  onReleasesChange,
+}: {
+  onReleasesChange?: () => void;
+}) {
+  const { getAccessToken } = useAuth();
+  const [releases, setReleases] = useState<Release[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showAddRelease, setShowAddRelease] = useState(false);
   const [selectedRelease, setSelectedRelease] = useState<Release | null>(null);
 
   useEffect(() => {
+    fetchReleases();
+  }, []);
+
+  async function fetchReleases() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(releases));
-    } catch {
-      // ignore
+      const token = getAccessToken();
+      if (!token) return;
+      
+      const res = await fetch("/api/releases", {
+        credentials: "include",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setReleases(data.items || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch releases:", error);
+    } finally {
+      setLoading(false);
     }
-  }, [releases]);
-
-  function addRelease(release: Omit<Release, "id">) {
-    const newRelease: Release = {
-      ...release,
-      id: Date.now().toString(),
-    };
-    setReleases((prev) => [...prev, newRelease]);
-    setShowAddRelease(false);
   }
 
-  function updateRelease(id: string, updates: Partial<Release>) {
-    setReleases((prev) => prev.map((r) => (r.id === id ? { ...r, ...updates } : r)));
+  async function addRelease(name: string, targetDate?: string) {
+    try {
+      const token = getAccessToken();
+      if (!token) return;
+      
+      const res = await fetch("/api/releases", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          name,
+          targetReleaseDate: targetDate || null,
+          createDefaultTasks: true,
+        }),
+      });
+
+      if (res.ok) {
+        const newRelease = await res.json();
+        setReleases((prev) => [...prev, newRelease]);
+        setShowAddRelease(false);
+        onReleasesChange?.();
+      }
+    } catch (error) {
+      console.error("Failed to add release:", error);
+    }
   }
 
-  function deleteRelease(id: string) {
-    setReleases((prev) => prev.filter((r) => r.id !== id));
-    setSelectedRelease(null);
+  async function updateRelease(id: string, updates: Partial<Release>) {
+    try {
+      const token = getAccessToken();
+      if (!token) return;
+      
+      const res = await fetch(`/api/releases/${id}`, {
+        method: "PATCH",
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+        body: JSON.stringify(updates),
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        setReleases((prev) =>
+          prev.map((r) => (r.id === id ? { ...r, ...updated } : r))
+        );
+        if (selectedRelease?.id === id) {
+          setSelectedRelease({ ...selectedRelease, ...updated });
+        }
+      }
+    } catch (error) {
+      console.error("Failed to update release:", error);
+    }
   }
 
-  function addMilestone(releaseId: string, milestone: Omit<Milestone, "id">) {
-    setReleases((prev) =>
-      prev.map((r) => {
-        if (r.id !== releaseId) return r;
-        return {
-          ...r,
-          milestones: [
-            ...r.milestones,
-            { ...milestone, id: Date.now().toString() },
-          ],
-        };
-      })
+  async function deleteRelease(id: string) {
+    try {
+      const token = getAccessToken();
+      if (!token) return;
+      
+      const res = await fetch(`/api/releases/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.ok) {
+        setReleases((prev) => prev.filter((r) => r.id !== id));
+        setSelectedRelease(null);
+        onReleasesChange?.();
+      }
+    } catch (error) {
+      console.error("Failed to delete release:", error);
+    }
+  }
+
+  const sortedReleases = [...releases].sort((a, b) => {
+    if (!a.targetReleaseDate) return 1;
+    if (!b.targetReleaseDate) return -1;
+    return a.targetReleaseDate.localeCompare(b.targetReleaseDate);
+  });
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="text-center py-12">
+          <div className="inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="text-muted-foreground">Loading releases...</p>
+        </div>
+      </div>
     );
   }
-
-  function toggleMilestone(releaseId: string, milestoneId: string) {
-    setReleases((prev) =>
-      prev.map((r) => {
-        if (r.id !== releaseId) return r;
-        return {
-          ...r,
-          milestones: r.milestones.map((m) =>
-            m.id === milestoneId ? { ...m, completed: !m.completed } : m
-          ),
-        };
-      })
-    );
-  }
-
-  function deleteMilestone(releaseId: string, milestoneId: string) {
-    setReleases((prev) =>
-      prev.map((r) => {
-        if (r.id !== releaseId) return r;
-        return {
-          ...r,
-          milestones: r.milestones.filter((m) => m.id !== milestoneId),
-        };
-      })
-    );
-  }
-
-  const sortedReleases = [...releases].sort((a, b) => a.releaseDate.localeCompare(b.releaseDate));
 
   return (
     <div className="p-6">
@@ -113,7 +158,7 @@ export default function ReleaseTimeline() {
         <h2 className="text-2xl font-semibold">Release Timeline</h2>
         <button
           onClick={() => setShowAddRelease(true)}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
         >
           New Release
         </button>
@@ -121,8 +166,12 @@ export default function ReleaseTimeline() {
 
       {releases.length === 0 && (
         <div className="text-center py-12 bg-card border border-border rounded-lg">
-          <p className="text-lg text-muted-foreground mb-2">No releases planned yet</p>
-          <p className="text-sm text-muted-foreground">Start planning your next release to organize milestones and track progress</p>
+          <p className="text-lg text-muted-foreground mb-2">
+            No releases planned yet
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Start planning your next release to organize tasks and track progress
+          </p>
         </div>
       )}
 
@@ -144,16 +193,16 @@ export default function ReleaseTimeline() {
               release={selectedRelease}
               onUpdate={updateRelease}
               onDelete={deleteRelease}
-              onAddMilestone={addMilestone}
-              onToggleMilestone={toggleMilestone}
-              onDeleteMilestone={deleteMilestone}
             />
           </div>
         )}
       </div>
 
       {showAddRelease && (
-        <AddReleaseModal onClose={() => setShowAddRelease(false)} onAdd={addRelease} />
+        <AddReleaseModal
+          onClose={() => setShowAddRelease(false)}
+          onAdd={addRelease}
+        />
       )}
     </div>
   );
@@ -168,46 +217,45 @@ function ReleaseCard({
   isSelected: boolean;
   onClick: () => void;
 }) {
-  const completedMilestones = release.milestones.filter((m) => m.completed).length;
-  const totalMilestones = release.milestones.length;
-  const progress = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
-
-  const daysUntilRelease = Math.ceil(
-    (new Date(release.releaseDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
-  );
+  const daysUntilRelease = release.targetReleaseDate
+    ? Math.ceil(
+        (new Date(release.targetReleaseDate).getTime() - new Date().getTime()) /
+          (1000 * 60 * 60 * 24)
+      )
+    : null;
 
   return (
     <div
       onClick={onClick}
       className={`bg-card border rounded-lg p-4 cursor-pointer transition-all ${
-        isSelected ? "border-primary ring-2 ring-primary/20" : "border-border hover:border-primary/50"
+        isSelected
+          ? "border-primary ring-2 ring-primary/20"
+          : "border-border hover:border-primary/50"
       }`}
     >
       <div className="flex items-start gap-3">
-        <div className="w-16 h-16 bg-muted rounded flex items-center justify-center text-2xl">
-          Cover
+        <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/10 rounded flex items-center justify-center text-2xl font-bold text-primary">
+          {release.name[0]?.toUpperCase() || "R"}
         </div>
         <div className="flex-1">
-          <div className="font-semibold text-lg">{release.title}</div>
-          <div className="text-sm text-muted-foreground">{release.artist}</div>
+          <div className="font-semibold text-lg">{release.name}</div>
           <div className="flex items-center gap-2 mt-2">
             <StatusBadge status={release.status} />
-            <span className="text-xs text-muted-foreground">
-              {daysUntilRelease > 0 ? `${daysUntilRelease} days away` : daysUntilRelease === 0 ? "Today!" : "Released"}
-            </span>
+            {daysUntilRelease !== null && (
+              <span className="text-xs text-muted-foreground">
+                {daysUntilRelease > 0
+                  ? `${daysUntilRelease} days away`
+                  : daysUntilRelease === 0
+                  ? "Today!"
+                  : "Released"}
+              </span>
+            )}
           </div>
-          <div className="mt-2 text-sm">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-muted-foreground">Progress</span>
-              <span className="font-medium">{progress}%</span>
+          {release.targetReleaseDate && (
+            <div className="mt-2 text-sm text-muted-foreground">
+              Target: {new Date(release.targetReleaseDate).toLocaleDateString()}
             </div>
-            <div className="w-full bg-muted rounded-full h-2">
-              <div
-                className="bg-primary h-2 rounded-full transition-all"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
@@ -218,46 +266,20 @@ function ReleaseDetails({
   release,
   onUpdate,
   onDelete,
-  onAddMilestone,
-  onToggleMilestone,
-  onDeleteMilestone,
 }: {
   release: Release;
   onUpdate: (id: string, updates: Partial<Release>) => void;
   onDelete: (id: string) => void;
-  onAddMilestone: (releaseId: string, milestone: Omit<Milestone, "id">) => void;
-  onToggleMilestone: (releaseId: string, milestoneId: string) => void;
-  onDeleteMilestone: (releaseId: string, milestoneId: string) => void;
 }) {
-  const [showAddMilestone, setShowAddMilestone] = useState(false);
-  const [milestoneTitle, setMilestoneTitle] = useState("");
-  const [milestoneDueDate, setMilestoneDueDate] = useState("");
-  const [notes, setNotes] = useState(release.notes || "");
-
-  function handleAddMilestone(e: React.FormEvent) {
-    e.preventDefault();
-    if (!milestoneTitle.trim() || !milestoneDueDate) return;
-
-    onAddMilestone(release.id, {
-      title: milestoneTitle.trim(),
-      dueDate: milestoneDueDate,
-      completed: false,
-    });
-
-    setMilestoneTitle("");
-    setMilestoneDueDate("");
-    setShowAddMilestone(false);
-  }
-
-  const sortedMilestones = [...release.milestones].sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+  const [name, setName] = useState(release.name);
+  const [targetDate, setTargetDate] = useState(
+    release.targetReleaseDate || ""
+  );
 
   return (
     <div className="bg-card border border-border rounded-lg p-6">
       <div className="flex items-start justify-between mb-4">
-        <div>
-          <h3 className="text-xl font-semibold">{release.title}</h3>
-          <p className="text-muted-foreground">{release.artist}</p>
-        </div>
+        <h3 className="text-xl font-semibold">Release Details</h3>
         <button
           onClick={() => onDelete(release.id)}
           className="text-red-600 text-sm px-2 py-1 hover:bg-red-50 rounded"
@@ -266,127 +288,79 @@ function ReleaseDetails({
         </button>
       </div>
 
-      <div className="mb-4">
-        <div className="text-sm font-medium mb-1">Release Date</div>
-        <input
-          type="date"
-          value={release.releaseDate}
-          onChange={(e) => onUpdate(release.id, { releaseDate: e.target.value })}
-          className="w-full px-3 py-2 border border-border rounded-md bg-background"
-        />
-      </div>
+      <div className="space-y-4">
+        <div>
+          <label className="text-sm font-medium block mb-1">Name</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onBlur={() => onUpdate(release.id, { name })}
+            className="w-full px-3 py-2 border border-border rounded-md bg-background"
+          />
+        </div>
 
-      <div className="mb-4">
-        <div className="text-sm font-medium mb-1">Status</div>
-        <select
-          value={release.status}
-          onChange={(e) => onUpdate(release.id, { status: e.target.value as ReleaseStatus })}
-          className="w-full px-3 py-2 border border-border rounded-md bg-background"
-        >
-          <option value="planning">Planning</option>
-          <option value="in_progress">In Progress</option>
-          <option value="completed">Completed</option>
-        </select>
-      </div>
+        <div>
+          <label className="text-sm font-medium block mb-1">
+            Target Release Date
+          </label>
+          <input
+            type="date"
+            value={targetDate}
+            onChange={(e) => {
+              setTargetDate(e.target.value);
+              onUpdate(release.id, { targetReleaseDate: e.target.value || null });
+            }}
+            className="w-full px-3 py-2 border border-border rounded-md bg-background"
+          />
+        </div>
 
-      <div className="mb-4">
-        <div className="flex items-center justify-between mb-2">
-          <div className="text-sm font-medium">Milestones</div>
-          <button
-            onClick={() => setShowAddMilestone(!showAddMilestone)}
-            className="text-sm text-primary"
+        <div>
+          <label className="text-sm font-medium block mb-1">Status</label>
+          <select
+            value={release.status}
+            onChange={(e) =>
+              onUpdate(release.id, { status: e.target.value as ReleaseStatus })
+            }
+            className="w-full px-3 py-2 border border-border rounded-md bg-background"
           >
-            + Add
-          </button>
+            <option value="PLANNING">Planning</option>
+            <option value="IN_PROGRESS">In Progress</option>
+            <option value="COMPLETED">Completed</option>
+          </select>
         </div>
 
-        {showAddMilestone && (
-          <form onSubmit={handleAddMilestone} className="mb-3 p-3 border border-border rounded-md">
-            <input
-              type="text"
-              placeholder="Milestone title"
-              value={milestoneTitle}
-              onChange={(e) => setMilestoneTitle(e.target.value)}
-              className="w-full px-3 py-2 border border-border rounded-md bg-background mb-2"
-            />
-            <input
-              type="date"
-              value={milestoneDueDate}
-              onChange={(e) => setMilestoneDueDate(e.target.value)}
-              className="w-full px-3 py-2 border border-border rounded-md bg-background mb-2"
-            />
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setShowAddMilestone(false)}
-                className="flex-1 px-3 py-1 border border-border rounded-md text-sm"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="flex-1 px-3 py-1 bg-primary text-primary-foreground rounded-md text-sm"
-              >
-                Add
-              </button>
-            </div>
-          </form>
-        )}
-
-        <div className="space-y-2">
-          {sortedMilestones.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-4">No milestones yet</p>
-          )}
-          {sortedMilestones.map((milestone) => (
-            <div
-              key={milestone.id}
-              className="flex items-start gap-2 p-2 border border-border rounded-md"
-            >
-              <input
-                type="checkbox"
-                checked={milestone.completed}
-                onChange={() => onToggleMilestone(release.id, milestone.id)}
-                className="mt-1"
-              />
-              <div className="flex-1">
-                <div className={`text-sm ${milestone.completed ? "line-through text-muted-foreground" : ""}`}>
-                  {milestone.title}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {new Date(milestone.dueDate).toLocaleDateString()}
-                </div>
-              </div>
-              <button
-                onClick={() => onDeleteMilestone(release.id, milestone.id)}
-                className="text-red-600 text-xs px-2 py-1"
-              >
-                ×
-              </button>
-            </div>
-          ))}
+        <div className="pt-4 border-t border-border">
+          <div className="text-sm text-muted-foreground">
+            Created: {new Date(release.createdAt).toLocaleDateString()}
+          </div>
+          <div className="text-sm text-muted-foreground">
+            Updated: {new Date(release.updatedAt).toLocaleDateString()}
+          </div>
         </div>
-      </div>
-
-      <div>
-        <div className="text-sm font-medium mb-1">Notes</div>
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          onBlur={() => onUpdate(release.id, { notes })}
-          className="w-full px-3 py-2 border border-border rounded-md bg-background min-h-[100px]"
-          placeholder="Add notes about this release..."
-        />
       </div>
     </div>
   );
 }
 
 function StatusBadge({ status }: { status: ReleaseStatus }) {
-  if (status === "completed")
-    return <span className="px-2 py-1 rounded bg-green-100 text-green-800 text-xs font-semibold">Completed</span>;
-  if (status === "in_progress")
-    return <span className="px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs font-semibold">In Progress</span>;
-  return <span className="px-2 py-1 rounded bg-gray-100 text-gray-800 text-xs font-semibold">Planning</span>;
+  if (status === "COMPLETED")
+    return (
+      <span className="px-2 py-1 rounded bg-green-100 text-green-800 text-xs font-semibold">
+        Completed
+      </span>
+    );
+  if (status === "IN_PROGRESS")
+    return (
+      <span className="px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs font-semibold">
+        In Progress
+      </span>
+    );
+  return (
+    <span className="px-2 py-1 rounded bg-gray-100 text-gray-800 text-xs font-semibold">
+      Planning
+    </span>
+  );
 }
 
 function AddReleaseModal({
@@ -394,24 +368,15 @@ function AddReleaseModal({
   onAdd,
 }: {
   onClose: () => void;
-  onAdd: (release: Omit<Release, "id">) => void;
+  onAdd: (name: string, targetDate?: string) => void;
 }) {
-  const [title, setTitle] = useState("");
-  const [artist, setArtist] = useState("");
-  const [releaseDate, setReleaseDate] = useState("");
+  const [name, setName] = useState("");
+  const [targetDate, setTargetDate] = useState("");
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!title.trim() || !artist.trim() || !releaseDate) return;
-
-    onAdd({
-      title: title.trim(),
-      artist: artist.trim(),
-      releaseDate,
-      status: "planning",
-      milestones: [],
-      notes: "",
-    });
+    if (!name.trim()) return;
+    onAdd(name.trim(), targetDate || undefined);
   }
 
   return (
@@ -420,35 +385,29 @@ function AddReleaseModal({
         <h3 className="text-xl font-semibold mb-4">New Release</h3>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-sm font-medium block mb-1">Title</label>
+            <label className="text-sm font-medium block mb-1">
+              Release Name
+            </label>
             <input
               type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               className="w-full px-3 py-2 border border-border rounded-md bg-background"
+              placeholder="e.g., Summer EP 2024"
               required
+              autoFocus
             />
           </div>
 
           <div>
-            <label className="text-sm font-medium block mb-1">Artist</label>
-            <input
-              type="text"
-              value={artist}
-              onChange={(e) => setArtist(e.target.value)}
-              className="w-full px-3 py-2 border border-border rounded-md bg-background"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium block mb-1">Release Date</label>
+            <label className="text-sm font-medium block mb-1">
+              Target Release Date (Optional)
+            </label>
             <input
               type="date"
-              value={releaseDate}
-              onChange={(e) => setReleaseDate(e.target.value)}
+              value={targetDate}
+              onChange={(e) => setTargetDate(e.target.value)}
               className="w-full px-3 py-2 border border-border rounded-md bg-background"
-              required
             />
           </div>
 
@@ -456,13 +415,13 @@ function AddReleaseModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-border rounded-md"
+              className="flex-1 px-4 py-2 border border-border rounded-md hover:bg-accent"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md"
+              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
             >
               Create Release
             </button>
