@@ -18,3 +18,6 @@ For any architectural/engineering decisions we make, we will create an ADR (Arch
 - [ADR 003: Hootsuite](./adr-003.md)
 - [ADR 004: ayrshare](./adr-004.md)
 - [ADR 005: Vitest (Testing Framework)](./adr-005.md)
+- [ADR 006: Postiz](./adr-006.md)
+- [ADR 007: Gemini](./adr-007.md)
+- [ADR 008: Azure Virtual Machine (Deployment)](./adr-008.md)
