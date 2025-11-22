@@ -36,11 +36,8 @@ jobs:
       - name: Run Linting (ESLint)
         run: npm run lint
 
-      - name: Run Unit + Integration Tests (Vitest)
+      - name: Run Tests + Coverage (Vitest + v8)
         run: npm test -- --run
-
-      - name: Run Test Coverage (Vitest + v8)
-        run: npm run coverage
 
       - name: Confirm Buildability (Next.js)
         run: npm run build
