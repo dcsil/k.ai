@@ -33,14 +33,14 @@ jobs:
         shell: bash
         run: bash scripts/setup.sh
 
-      - name: Run ESLint
+      - name: Run Linting (ESLint)
         run: npm run lint
 
-      - name: Run tests (Vitest)
+      - name: Run Unit + Integration Tests (Vitest)
         run: npm test -- --run
 
-      - name: Run Test Coverage
+      - name: Run Test Coverage (Vitest + v8)
         run: npm run coverage
 
-      - name: Build project (Next.js)
+      - name: Confirm Buildability (Next.js)
         run: npm run build
