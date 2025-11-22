@@ -39,5 +39,8 @@ jobs:
       - name: Run tests (Vitest)
         run: npm test -- --run
 
+      - name: Run Test Coverage
+        run: npm run coverage
+
       - name: Build project (Next.js)
         run: npm run build
