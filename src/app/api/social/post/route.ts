@@ -3,9 +3,17 @@ import { postToInstagram } from '@/lib/ayrshare';
 
 export async function POST(request: NextRequest) {
   try {
-    const { text, imageUrl } = await request.json();
+    const { post, mediaUrls } = await request.json();
 
-    const result = await postToInstagram(text, imageUrl);
+    if (!post) {
+      return NextResponse.json(
+        { error: 'Missing required field: post' },
+        { status: 400 }
+      );
+    }
+
+    const imageUrl = mediaUrls && mediaUrls.length > 0 ? mediaUrls[0] : undefined;
+    const result = await postToInstagram(post, imageUrl);
 
     return NextResponse.json({ success: true, data: result });
   } catch (error) {

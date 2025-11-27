@@ -307,6 +307,8 @@ function PostComposer({
   const [platforms, setPlatforms] = useState<Platform[]>([]);
   const [scheduledFor, setScheduledFor] = useState("");
   const [status, setStatus] = useState<PostStatus>("draft");
+  const [posting, setPosting] = useState(false);
+  const [error, setError] = useState("");
 
   function togglePlatform(platform: Platform) {
     setPlatforms((prev) =>
@@ -326,6 +328,45 @@ function PostComposer({
       scheduledFor: scheduledFor || undefined,
       status,
     });
+  }
+
+  async function handlePostNow() {
+    if (!content.trim() || platforms.length === 0) return;
+    
+    if (!platforms.includes("instagram")) {
+      setError("Please select Instagram to post now");
+      return;
+    }
+
+    setPosting(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/social/post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          post: content.trim(),
+          platforms: ["instagram"],
+          mediaUrls: ["https://raw.githubusercontent.com/Yiyun95788/k.ai_test/main/kai_logo.png"]
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to post");
+      }
+
+      onAdd({
+        content: content.trim(),
+        platforms,
+        status: "published",
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to post");
+    } finally {
+      setPosting(false);
+    }
   }
 
   return (
@@ -388,6 +429,12 @@ function PostComposer({
             />
           </div>
 
+          {error && (
+            <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">
+              {error}
+            </div>
+          )}
+
           <div className="flex gap-3 pt-2">
             <button
               type="button"
@@ -401,6 +448,14 @@ function PostComposer({
               className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md"
             >
               {status === "scheduled" ? "Schedule Post" : "Save Draft"}
+            </button>
+            <button
+              type="button"
+              onClick={handlePostNow}
+              disabled={posting || !content.trim() || platforms.length === 0}
+              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md disabled:opacity-50"
+            >
+              {posting ? "Posting..." : "Post Now"}
             </button>
           </div>
         </form>
