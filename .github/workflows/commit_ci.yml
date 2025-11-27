@@ -26,18 +26,18 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '22'
+          node-version: '24'
           cache: 'npm'
 
       - name: Setup project (deps, env, prisma)
         shell: bash
         run: bash scripts/setup.sh
 
-      - name: Run ESLint
+      - name: Run Linting (ESLint)
         run: npm run lint
 
-      - name: Run tests (Vitest)
+      - name: Run Tests + Coverage (Vitest + v8)
         run: npm test -- --run
 
-      - name: Build project (Next.js)
+      - name: Confirm Buildability (Next.js)
         run: npm run build

@@ -1,0 +1,59 @@
+name: Master CD
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "master"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  verify:
+    name: Lint, Test, Build, and Publish
+    runs-on: ubuntu-latest
+    env:
+      NEXT_TELEMETRY_DISABLED: 1
+      CI: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Setup project (deps, env, prisma)
+        shell: bash
+        run: bash scripts/setup.sh
+
+      - name: Run Linting (ESLint)
+        run: npm run lint
+
+      - name: Run Tests + Coverage (Vitest + v8)
+        run: npm test -- --run
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
