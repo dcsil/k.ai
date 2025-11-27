@@ -39,6 +39,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (res?.ok) {
         const data = await res.json();
         setAccessToken(data.accessToken);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("accessToken", data.accessToken);
+        }
         // Decode user info from token
         const payload = JSON.parse(atob(data.accessToken.split(".")[1]));
         setUser({
@@ -52,11 +55,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // expected 401 error when user is not logged in
         setUser(null);
         setAccessToken(null);
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("accessToken");
+        }
       }
     } catch (error) {
       // handle auth check failures
       setUser(null);
       setAccessToken(null);
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("accessToken");
+      }
     } finally {
       setLoading(false);
     }
@@ -81,6 +90,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const data = await res.json();
     setAccessToken(data.accessToken);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("accessToken", data.accessToken);
+    }
     setUser(data.user);
     router.push("/");
   }
@@ -100,6 +112,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const data = await res.json();
     setAccessToken(data.accessToken);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("accessToken", data.accessToken);
+    }
     setUser(data.user);
     router.push("/");
   }
@@ -111,6 +126,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     setUser(null);
     setAccessToken(null);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("accessToken");
+    }
     router.push("/login");
   }
 
