@@ -105,9 +105,13 @@ export default function AIChatbot() {
         ? `Here is the user's current music release information:\n\n${context}\n\nUser question: ${userMessage.content}`
         : userMessage.content;
 
+      const token = getAccessToken();
+
       const res = await fetch("/api/genai", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` })
+         },
         body: JSON.stringify({ prompt: contextPrompt }),
       });
 
