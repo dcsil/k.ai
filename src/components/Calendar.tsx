@@ -33,14 +33,14 @@ export default function Calendar() {
   });
   const [tasks, setTasks] = useState<CalendarEvent[]>([]);
   const [showAddEvent, setShowAddEvent] = useState(false);
+  const [showEditEvent, setShowEditEvent] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>("");
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
 
-  // Fetch tasks from API
   useEffect(() => {
     fetchTasks();
   }, []);
 
-  // Save manual events to localStorage
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(manualEvents));
@@ -104,12 +104,25 @@ export default function Calendar() {
     setShowAddEvent(false);
   }
 
+  function updateEvent(id: string, updates: Omit<CalendarEvent, "id" | "type">) {
+    setManualEvents((prev) =>
+      prev.map((e) => (e.id === id ? { ...e, ...updates } : e))
+    );
+    setShowEditEvent(false);
+    setEditingEvent(null);
+  }
+
   function deleteEvent(id: string) {
     if (id.startsWith("task-")) {
-      // Can't delete tasks from calendar now
       return;
     }
     setManualEvents((prev) => prev.filter((e) => e.id !== id));
+  }
+
+  function openEditModal(event: CalendarEvent) {
+    if (event.type === "task") return;
+    setEditingEvent(event);
+    setShowEditEvent(true);
   }
 
   const monthDays = useMemo(() => {
@@ -264,6 +277,7 @@ export default function Calendar() {
             setShowAddEvent(true);
           }}
           onDeleteEvent={deleteEvent}
+          onEditEvent={openEditModal}
         />
       )}
 
@@ -276,6 +290,7 @@ export default function Calendar() {
             setShowAddEvent(true);
           }}
           onDeleteEvent={deleteEvent}
+          onEditEvent={openEditModal}
         />
       )}
 
@@ -284,14 +299,29 @@ export default function Calendar() {
           currentDate={currentDate}
           events={allEvents}
           onDeleteEvent={deleteEvent}
+          onEditEvent={openEditModal}
         />
       )}
 
       {showAddEvent && (
-        <AddEventModal
+        <EventModal
+          mode="add"
           selectedDate={selectedDate}
           onClose={() => setShowAddEvent(false)}
-          onAdd={addEvent}
+          onSave={addEvent}
+        />
+      )}
+
+      {showEditEvent && editingEvent && (
+        <EventModal
+          mode="edit"
+          selectedDate={editingEvent.date}
+          existingEvent={editingEvent}
+          onClose={() => {
+            setShowEditEvent(false);
+            setEditingEvent(null);
+          }}
+          onSave={(updates) => updateEvent(editingEvent.id, updates)}
         />
       )}
     </div>
@@ -303,6 +333,8 @@ function MonthView({
   currentDate,
   getEventsForDate,
   onDateClick,
+  onDeleteEvent,
+  onEditEvent,
 }: {
   monthDays: (number | null)[];
   currentDate: Date;
@@ -310,7 +342,10 @@ function MonthView({
   getEventsForDate: (date: string) => CalendarEvent[];
   onDateClick: (date: string) => void;
   onDeleteEvent: (id: string) => void;
+  onEditEvent: (event: CalendarEvent) => void;
 }) {
+  const [expandedDate, setExpandedDate] = useState<string | null>(null);
+
   return (
     <div className="bg-card border border-border rounded-lg overflow-hidden">
       <div className="grid grid-cols-7 border-b border-border">
@@ -333,35 +368,83 @@ function MonthView({
 
           const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
           const dayEvents = getEventsForDate(dateStr);
+          const isExpanded = expandedDate === dateStr;
 
           return (
             <div
               key={i}
-              className="border-b border-r border-border p-2 h-24 cursor-pointer hover:bg-accent/10"
-              onClick={() => onDateClick(dateStr)}
+              className="border-b border-r border-border p-2 h-24 relative"
             >
               <div className="text-sm font-medium mb-1">{day}</div>
               <div className="space-y-1">
                 {dayEvents.slice(0, 2).map((event) => (
                   <div
                     key={event.id}
-                    className={`text-xs px-1 py-0.5 rounded truncate ${
+                    className={`text-xs px-1 py-0.5 rounded truncate cursor-pointer ${
                       event.type === "task"
                         ? "bg-blue-100 text-blue-800"
                         : "bg-primary/20"
                     }`}
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setExpandedDate(isExpanded ? null : dateStr);
+                    }}
                   >
-                    {event.type === "task" && "📋 "}
                     {event.title}
                   </div>
                 ))}
                 {dayEvents.length > 2 && (
-                  <div className="text-xs text-muted-foreground">
+                  <div
+                    className="text-xs text-muted-foreground cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setExpandedDate(isExpanded ? null : dateStr);
+                    }}
+                  >
                     +{dayEvents.length - 2} more
                   </div>
                 )}
               </div>
+              <button
+                onClick={() => onDateClick(dateStr)}
+                className="absolute bottom-1 right-1 text-xs text-muted-foreground hover:text-foreground"
+              >
+                +
+              </button>
+
+              {isExpanded && dayEvents.length > 0 && (
+                <div
+                  className="absolute top-full left-0 z-10 bg-card border border-border rounded-lg shadow-lg p-3 w-64 mt-1"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="space-y-2">
+                    {dayEvents.map((event) => (
+                      <div key={event.id} className="border-b border-border pb-2 last:border-0">
+                        <div className="font-medium text-sm">{event.title}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {event.startTime} - {event.endTime}
+                        </div>
+                        {event.type === "event" && (
+                          <div className="flex gap-2 mt-2">
+                            <button
+                              onClick={() => onEditEvent(event)}
+                              className="text-xs px-2 py-1 border border-border rounded hover:bg-accent"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => onDeleteEvent(event.id)}
+                              className="text-xs px-2 py-1 text-red-600 border border-red-600 rounded hover:bg-red-50"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}
@@ -374,11 +457,14 @@ function WeekView({
   currentDate,
   events,
   onDateClick,
+  onDeleteEvent,
+  onEditEvent,
 }: {
   currentDate: Date;
   events: CalendarEvent[];
   onDateClick: (date: string) => void;
   onDeleteEvent: (id: string) => void;
+  onEditEvent: (event: CalendarEvent) => void;
 }) {
   const weekDays = useMemo(() => {
     const start = new Date(currentDate);
@@ -406,14 +492,13 @@ function WeekView({
       </div>
       <div className="grid grid-cols-7">
         {weekDays.map((day) => {
-          const dateStr = day.toISOString().split("T")[0];
+          const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
           const dayEvents = events.filter((e) => e.date === dateStr);
 
           return (
             <div
               key={dateStr}
-              className="border-r border-border p-2 min-h-[200px] cursor-pointer hover:bg-accent/10"
-              onClick={() => onDateClick(dateStr)}
+              className="border-r border-border p-2 min-h-[200px]"
             >
               <div className="space-y-2">
                 {dayEvents.map((event) => (
@@ -424,19 +509,37 @@ function WeekView({
                         ? "bg-blue-100 text-blue-800"
                         : "bg-primary/20"
                     }`}
-                    onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="font-medium">
-                      {event.type === "task" && "📋 "}
-                      {event.title}
-                    </div>
+                    <div className="font-medium">{event.title}</div>
                     {event.type === "event" && (
                       <div className="text-muted-foreground">
                         {event.startTime} - {event.endTime}
                       </div>
                     )}
+                    {event.type === "event" && (
+                      <div className="flex gap-1 mt-1">
+                        <button
+                          onClick={() => onEditEvent(event)}
+                          className="text-xs px-1 py-0.5 border border-border rounded hover:bg-accent"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => onDeleteEvent(event.id)}
+                          className="text-xs px-1 py-0.5 text-red-600 border border-red-600 rounded hover:bg-red-50"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
+                <button
+                  onClick={() => onDateClick(dateStr)}
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                >
+                  + Add
+                </button>
               </div>
             </div>
           );
@@ -450,12 +553,14 @@ function DayView({
   currentDate,
   events,
   onDeleteEvent,
+  onEditEvent,
 }: {
   currentDate: Date;
   events: CalendarEvent[];
   onDeleteEvent: (id: string) => void;
+  onEditEvent: (event: CalendarEvent) => void;
 }) {
-  const dateStr = currentDate.toISOString().split("T")[0];
+  const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`;
   const dayEvents = events
     .filter((e) => e.date === dateStr)
     .sort((a, b) => a.startTime.localeCompare(b.startTime));
@@ -493,12 +598,20 @@ function DayView({
                 )}
               </div>
               {event.type === "event" && (
-                <button
-                  onClick={() => onDeleteEvent(event.id)}
-                  className="text-red-600 text-sm px-2 py-1 hover:bg-red-50 rounded"
-                >
-                  Delete
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => onEditEvent(event)}
+                    className="text-sm px-2 py-1 border border-border rounded hover:bg-accent"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => onDeleteEvent(event.id)}
+                    className="text-red-600 text-sm px-2 py-1 hover:bg-red-50 rounded"
+                  >
+                    Delete
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -528,29 +641,34 @@ function TaskStatusBadge({ status }: { status: string }) {
   );
 }
 
-function AddEventModal({
+function EventModal({
+  mode,
   selectedDate,
+  existingEvent,
   onClose,
-  onAdd,
+  onSave,
 }: {
+  mode: "add" | "edit";
   selectedDate: string;
+  existingEvent?: CalendarEvent;
   onClose: () => void;
-  onAdd: (event: Omit<CalendarEvent, "id" | "type">) => void;
+  onSave: (event: Omit<CalendarEvent, "id" | "type">) => void;
 }) {
-  const [title, setTitle] = useState("");
-  const [date, setDate] = useState(selectedDate);
-  const [startTime, setStartTime] = useState("09:00");
-  const [endTime, setEndTime] = useState("10:00");
-  const [description, setDescription] = useState("");
-  const [recurring, setRecurring] = useState<
-    "none" | "daily" | "weekly" | "monthly"
-  >("none");
+  const [title, setTitle] = useState(existingEvent?.title || "");
+  const [date, setDate] = useState(existingEvent?.date || selectedDate);
+  const [startTime, setStartTime] = useState(existingEvent?.startTime || "09:00");
+  const [endTime, setEndTime] = useState(existingEvent?.endTime || "10:00");
+  const [description, setDescription] = useState(existingEvent?.description || "");
+  const [recurring, setRecurring] = useState<"none" | "daily" | "weekly" | "monthly">(
+    existingEvent?.recurring || "none"
+  );
+
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim() || !date) return;
 
-    onAdd({
+    onSave({
       title: title.trim(),
       date,
       startTime,
@@ -563,7 +681,9 @@ function AddEventModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <div className="bg-card border border-border rounded-lg p-6 max-w-md w-full">
-        <h3 className="text-xl font-semibold mb-4">Add Event</h3>
+        <h3 className="text-xl font-semibold mb-4">
+          {mode === "add" ? "Add Event" : "Edit Event"}
+        </h3>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="text-sm font-medium block mb-1">
@@ -656,7 +776,7 @@ function AddEventModal({
               type="submit"
               className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
             >
-              Add Event
+              {mode === "add" ? "Add Event" : "Save Changes"}
             </button>
           </div>
         </form>
