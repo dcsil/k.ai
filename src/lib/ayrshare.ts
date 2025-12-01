@@ -17,7 +17,9 @@ export async function postToInstagram(text: string, imageUrl?: string) {
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to post: ${response.status}`);
+    const errorData = await response.json();
+    console.error('Ayrshare error:', errorData);
+    throw new Error(`Failed to post: ${response.status} - ${JSON.stringify(errorData)}`);
   }
 
   return await response.json();
