@@ -22,3 +22,81 @@ export async function postToInstagram(text: string, imageUrl?: string) {
 
   return await response.json();
 }
+
+export async function postToYouTube(
+  videoUrl: string,
+  title: string,
+  options?: {
+    privacyType?: 'private' | 'public' | 'unlisted';
+    selfDeclaredMadeForKids?: 'yes' | 'no';
+    scheduledAt?: Date;
+  }
+) {
+  const apiKey = process.env.POSTIZ_API_KEY;
+  const integrationId = process.env.POSTIZ_YOUTUBE_INTEGRATION_ID;
+
+  // if (!apiKey || !integrationId) {
+  //   throw new Error('Postiz API key or YouTube integration ID not configured');
+  // }
+
+  // print type to console
+  console.log('Type:' + options?.scheduledAt ? 'schedule' : 'post');
+
+  const postizRequest = {
+    // type: options?.scheduledAt ? 'schedule' : 'post',
+    type: 'now',
+    tags: [],
+    shortLink: false,
+    ...(options?.scheduledAt && { date: options.scheduledAt.toISOString() }),
+    posts: [
+      {
+        integration: {
+          // id: integrationId,
+          id: "cmi6rauor0001rv6qhye1gbke",
+        },
+        settings: {
+          title: title,
+          type: options?.privacyType || 'private',
+          selfDeclaredMadeForKids: options?.selfDeclaredMadeForKids || 'no',
+        },
+        value: [
+          {
+            id: generateUniqueId(),
+            content: '',
+            image: [
+              {
+                id: generateUniqueId(),
+                path: videoUrl,
+                alt: null,
+                thumbnail: null,
+                thumbnailTimestamp: null,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+
+  const response = await fetch('http://kai.kevin.plus:5000/api/public/v1/posts', {
+    method: 'POST',
+    headers: {
+      'Authorization': `${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(postizRequest),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      `Failed to post to YouTube: ${response.status} - ${errorData.message || response.statusText}`
+    );
+  }
+
+  return await response.json();
+}
+
+function generateUniqueId(): string {
+  return Math.random().toString(36).substr(2, 9);
+}

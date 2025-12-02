@@ -1,11 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { postToInstagram } from '@/lib/ayrshare';
+import { postToInstagram, postToYouTube } from '@/lib/ayrshare';
 
 export async function POST(request: NextRequest) {
   try {
-    const { text, imageUrl } = await request.json();
+    const body = await request.json();
+    const { platform, text, imageUrl, videoUrl, title, privacyType, scheduledAt } = body;
 
-    const result = await postToInstagram(text, imageUrl);
+    let result;
+
+    if (platform === 'youtube') {
+      if (!videoUrl || !title) {
+        return NextResponse.json(
+          { error: 'YouTube posts require videoUrl and title' },
+          { status: 400 }
+        );
+      }
+
+      result = await postToYouTube(videoUrl, title, {
+        privacyType: privacyType || 'private',
+        selfDeclaredMadeForKids: 'no',
+        ...(scheduledAt && { scheduledAt: new Date(scheduledAt) }),
+      });
+    } else {
+      // Default to Instagram
+      if (!text) {
+        return NextResponse.json(
+          { error: 'Instagram posts require text' },
+          { status: 400 }
+        );
+      }
+
+      result = await postToInstagram(text, imageUrl);
+    }
 
     return NextResponse.json({ success: true, data: result });
   } catch (error) {

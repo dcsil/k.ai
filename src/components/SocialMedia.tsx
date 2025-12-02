@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 
-type Platform = "instagram" | "facebook" | "x" | "tiktok";
+type Platform = "instagram" | "facebook" | "x" | "tiktok" | "youtube";
 
-type PostStatus = "draft" | "scheduled" | "published";
+type PostStatus = "draft" | "scheduled" | "published" | "pending";
 
 type SocialPost = {
   id: string;
@@ -13,6 +13,8 @@ type SocialPost = {
   scheduledFor?: string;
   status: PostStatus;
   mediaUrl?: string;
+  videoUrl?: string;
+  title?: string;
   createdAt: string;
 };
 
@@ -214,10 +216,19 @@ function PostCard({
       {expanded && (
         <div className="border-t border-border p-4 bg-popover">
           <div className="space-y-3">
-            <div>
-              <div className="text-sm font-semibold mb-1">Content</div>
-              <p className="text-sm whitespace-pre-wrap">{post.content}</p>
-            </div>
+            {post.title && (
+              <div>
+                <div className="text-sm font-semibold mb-1">Title</div>
+                <p className="text-sm">{post.title}</p>
+              </div>
+            )}
+
+            {post.content && (
+              <div>
+                <div className="text-sm font-semibold mb-1">Content</div>
+                <p className="text-sm whitespace-pre-wrap">{post.content}</p>
+              </div>
+            )}
 
             {post.mediaUrl && (
               <div>
@@ -225,6 +236,13 @@ function PostCard({
                 <div className="w-full h-48 bg-muted rounded-lg flex items-center justify-center">
                   Image attached
                 </div>
+              </div>
+            )}
+
+            {post.videoUrl && (
+              <div>
+                <div className="text-sm font-semibold mb-1">Video URL</div>
+                <p className="text-sm text-blue-600 break-all">{post.videoUrl}</p>
               </div>
             )}
 
@@ -287,6 +305,7 @@ function PlatformIcon({ platform }: { platform: Platform }) {
     facebook: "FB",
     x: "X",
     tiktok: "TT",
+    youtube: "YT",
   };
 
   return (
@@ -307,6 +326,11 @@ function PostComposer({
   const [platforms, setPlatforms] = useState<Platform[]>([]);
   const [scheduledFor, setScheduledFor] = useState("");
   const [status, setStatus] = useState<PostStatus>("draft");
+  const [mediaUrl, setMediaUrl] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
+  const [title, setTitle] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   function togglePlatform(platform: Platform) {
     setPlatforms((prev) =>
@@ -316,41 +340,100 @@ function PostComposer({
     );
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!content.trim() || platforms.length === 0) return;
+    setSubmitError("");
 
-    onAdd({
-      content: content.trim(),
-      platforms,
-      scheduledFor: scheduledFor || undefined,
-      status,
-    });
+    // Validation
+    if (!content.trim() && !videoUrl.trim()) {
+      setSubmitError("Please provide content or a video URL");
+      return;
+    }
+    if (platforms.length === 0) {
+      setSubmitError("Select at least one platform");
+      return;
+    }
+    if (platforms.includes("youtube") && !videoUrl.trim()) {
+      setSubmitError("YouTube requires a video URL");
+      return;
+    }
+    if (platforms.includes("youtube") && !title.trim()) {
+      setSubmitError("YouTube requires a title");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Submit to backend for each platform
+      for (const platform of platforms) {
+        const payload =
+          platform === "youtube"
+            ? {
+                platform: "youtube",
+                videoUrl,
+                title,
+                privacyType: "private",
+                scheduledAt: scheduledFor || undefined,
+              }
+            : {
+                platform: "instagram",
+                text: content.trim(),
+                imageUrl: mediaUrl || undefined,
+                scheduledAt: scheduledFor || undefined,
+              };
+
+        const response = await fetch("/api/social/post", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || `Failed to post to ${platform}`);
+        }
+      }
+
+      // Add to local state after successful submission
+      onAdd({
+        content: content.trim() || title,
+        platforms,
+        scheduledFor: scheduledFor || undefined,
+        status,
+        mediaUrl: mediaUrl || undefined,
+        videoUrl: videoUrl || undefined,
+        title: title || undefined,
+      });
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error ? error.message : "Failed to submit post"
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
+
+  const isYouTubeSelected = platforms.includes("youtube");
+  const isInstagramSelected = platforms.some(
+    (p) => p !== "youtube"
+  );
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-card border border-border rounded-lg p-6 max-w-2xl w-full">
+      <div className="bg-card border border-border rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <h3 className="text-xl font-semibold mb-4">Create Post</h3>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="text-sm font-medium block mb-1">Content</label>
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="w-full px-3 py-2 border border-border rounded-md bg-background min-h-[120px]"
-              placeholder=""
-              required
-            />
-            <div className="text-xs text-muted-foreground mt-1">
-              {content.length} characters
+          {submitError && (
+            <div className="p-3 bg-red-100 text-red-800 rounded-md text-sm">
+              {submitError}
             </div>
-          </div>
+          )}
 
           <div>
             <label className="text-sm font-medium block mb-2">Platforms</label>
-            <div className="grid grid-cols-4 gap-2">
-              {(["instagram", "facebook", "x", "tiktok"] as Platform[]).map(
+            <div className="grid grid-cols-5 gap-2">
+              {(["instagram", "facebook", "x", "tiktok", "youtube"] as Platform[]).map(
                 (platform) => (
                   <button
                     key={platform}
@@ -368,6 +451,69 @@ function PostComposer({
               )}
             </div>
           </div>
+
+          {isYouTubeSelected && (
+            <>
+              <div>
+                <label className="text-sm font-medium block mb-1">
+                  Video URL *
+                </label>
+                <input
+                  type="url"
+                  value={videoUrl}
+                  onChange={(e) => setVideoUrl(e.target.value)}
+                  className="w-full px-3 py-2 border border-border rounded-md bg-background"
+                  placeholder="https://example.com/video.mp4"
+                  required={isYouTubeSelected}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium block mb-1">
+                  Video Title *
+                </label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full px-3 py-2 border border-border rounded-md bg-background"
+                  placeholder="My awesome video title"
+                  required={isYouTubeSelected}
+                />
+              </div>
+            </>
+          )}
+
+          {isInstagramSelected && (
+            <>
+              <div>
+                <label className="text-sm font-medium block mb-1">Content</label>
+                <textarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  className="w-full px-3 py-2 border border-border rounded-md bg-background min-h-[100px]"
+                  placeholder="Write your post content..."
+                  required={isInstagramSelected}
+                />
+                <div className="text-xs text-muted-foreground mt-1">
+                  {content.length} characters
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium block mb-1">
+                  Image URL (optional)
+                </label>
+                <input
+                  type="url"
+                  value={mediaUrl}
+                  onChange={(e) => setMediaUrl(e.target.value)}
+                  className="w-full px-3 py-2 border border-border rounded-md bg-background"
+                  placeholder="https://example.com/image.jpg"
+                />
+              </div>
+            </>
+          )}
 
           <div>
             <label className="text-sm font-medium block mb-1">
@@ -393,14 +539,20 @@ function PostComposer({
               type="button"
               onClick={onClose}
               className="flex-1 px-4 py-2 border border-border rounded-md"
+              disabled={isSubmitting}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md"
+              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md disabled:opacity-50"
+              disabled={isSubmitting}
             >
-              {status === "scheduled" ? "Schedule Post" : "Save Draft"}
+              {isSubmitting
+                ? "Submitting..."
+                : status === "scheduled"
+                ? "Schedule Post"
+                : "Save Draft"}
             </button>
           </div>
         </form>
