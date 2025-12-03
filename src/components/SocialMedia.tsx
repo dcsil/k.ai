@@ -326,6 +326,8 @@ function PostComposer({
   const [platforms, setPlatforms] = useState<Platform[]>([]);
   const [scheduledFor, setScheduledFor] = useState("");
   const [status, setStatus] = useState<PostStatus>("draft");
+  const [posting, setPosting] = useState(false);
+  const [error, setError] = useState("");
   const [mediaUrl, setMediaUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [title, setTitle] = useState("");
@@ -342,27 +344,25 @@ function PostComposer({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!content.trim() || platforms.length === 0) return;
+
     setSubmitError("");
 
-    // Validation
-    if (!content.trim() && !videoUrl.trim()) {
-      setSubmitError("Please provide content or a video URL");
-      return;
-    }
-    if (platforms.length === 0) {
-      setSubmitError("Select at least one platform");
-      return;
-    }
-    if (platforms.includes("youtube") && !videoUrl.trim()) {
-      setSubmitError("YouTube requires a video URL");
-      return;
-    }
-    if (platforms.includes("youtube") && !title.trim()) {
-      setSubmitError("YouTube requires a title");
-      return;
-    }
-
     setIsSubmitting(true);
+
+    onAdd({
+      content: content.trim(),
+      platforms,
+      scheduledFor: scheduledFor || undefined,
+      status,
+    });
+  }
+
+  async function handlePostNow() {
+    if (!content.trim() || platforms.length === 0) return;
+
+    setPosting(true);
+    setError("");
 
     try {
       // Submit to backend for each platform
@@ -377,43 +377,41 @@ function PostComposer({
                 scheduledAt: scheduledFor || undefined,
               }
             : {
+                post: content.trim(),
                 platform: "instagram",
-                text: content.trim(),
-                imageUrl: mediaUrl || undefined,
-                scheduledAt: scheduledFor || undefined,
+                mediaUrls: ["https://raw.githubusercontent.com/Yiyun95788/k.ai_test/main/kai_logo.png"]
               };
 
-        const response = await fetch("/api/social/post", {
+        const res = await fetch("/api/social/post", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
 
-        if (!response.ok) {
-          const error = await response.json();
+        if (!res.ok) {
+          const error = await res.json();
           throw new Error(error.error || `Failed to post to ${platform}`);
         }
       }
 
       // Add to local state after successful submission
       onAdd({
-        content: content.trim() || title,
+        content: content.trim(),
         platforms,
         scheduledFor: scheduledFor || undefined,
-        status,
+        status: "published",
         mediaUrl: mediaUrl || undefined,
         videoUrl: videoUrl || undefined,
         title: title || undefined,
       });
-    } catch (error) {
-      setSubmitError(
-        error instanceof Error ? error.message : "Failed to submit post"
-      );
+    
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to post");
     } finally {
-      setIsSubmitting(false);
+      setPosting(false);
     }
   }
-
+  
   const isYouTubeSelected = platforms.includes("youtube");
   const isInstagramSelected = platforms.some(
     (p) => p !== "youtube"
@@ -484,36 +482,6 @@ function PostComposer({
             </>
           )}
 
-          {isInstagramSelected && (
-            <>
-              <div>
-                <label className="text-sm font-medium block mb-1">Content</label>
-                <textarea
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-md bg-background min-h-[100px]"
-                  placeholder="Write your post content..."
-                  required={isInstagramSelected}
-                />
-                <div className="text-xs text-muted-foreground mt-1">
-                  {content.length} characters
-                </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium block mb-1">
-                  Image URL (optional)
-                </label>
-                <input
-                  type="url"
-                  value={mediaUrl}
-                  onChange={(e) => setMediaUrl(e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-md bg-background"
-                  placeholder="https://example.com/image.jpg"
-                />
-              </div>
-            </>
-          )}
 
           <div>
             <label className="text-sm font-medium block mb-1">
@@ -534,6 +502,12 @@ function PostComposer({
             />
           </div>
 
+          {error && (
+            <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">
+              {error}
+            </div>
+          )}
+
           <div className="flex gap-3 pt-2">
             <button
               type="button"
@@ -548,11 +522,23 @@ function PostComposer({
               className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md disabled:opacity-50"
               disabled={isSubmitting}
             >
-              {isSubmitting
-                ? "Submitting..."
-                : status === "scheduled"
-                ? "Schedule Post"
-                : "Save Draft"}
+              {status === "scheduled" ? "Schedule Post" : "Save Draft"}
+            </button>
+            <button
+              type="button"
+              onClick={handlePostNow}
+              disabled={posting || !content.trim() || platforms.length === 0}
+              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md disabled:opacity-50"
+            >
+              {posting ? "Posting..." : "Post Now"}
+            </button>
+            <button
+              type="button"
+              onClick={handlePostNow}
+              disabled={posting || !content.trim() || platforms.length === 0}
+              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md disabled:opacity-50"
+            >
+              {posting ? "Posting..." : "Post Now"}
             </button>
           </div>
         </form>

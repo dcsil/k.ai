@@ -23,7 +23,8 @@ fi
 # Generate environment for CI
 if [ -f scripts/generate-env.js ]; then
   echo "[setup] Generating environment via scripts/generate-env.js"
-  node scripts/generate-env.js
+  # Pass any arguments provided to setup.sh to generate-env.js
+  node scripts/generate-env.js "$@"
 else
   echo "[setup] WARNING: scripts/generate-env.js not found; skipping env generation" >&2
 fi

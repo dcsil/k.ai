@@ -4,18 +4,11 @@ import { postToInstagram, postToYouTube } from '@/lib/ayrshare';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { platform, text, imageUrl, videoUrl, title, privacyType, scheduledAt } = body;
+    const { platform, post, mediaUrls, videoUrl, title, privacyType, scheduledAt } = body;
 
     let result;
 
     if (platform === 'youtube') {
-      if (!videoUrl || !title) {
-        return NextResponse.json(
-          { error: 'YouTube posts require videoUrl and title' },
-          { status: 400 }
-        );
-      }
-
       result = await postToYouTube(videoUrl, title, {
         privacyType: privacyType || 'private',
         selfDeclaredMadeForKids: 'no',
@@ -23,14 +16,17 @@ export async function POST(request: NextRequest) {
       });
     } else {
       // Default to Instagram
-      if (!text) {
+
+      if (!post) {
         return NextResponse.json(
-          { error: 'Instagram posts require text' },
+          { error: 'Missing required field: post' },
           { status: 400 }
         );
       }
 
-      result = await postToInstagram(text, imageUrl);
+      const imageUrl = mediaUrls && mediaUrls.length > 0 ? mediaUrls[0] : undefined;
+
+      result = await postToInstagram(post, mediaUrls);
     }
 
     return NextResponse.json({ success: true, data: result });
