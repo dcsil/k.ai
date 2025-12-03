@@ -98,7 +98,7 @@ export default function OnboardingPage() {
             Welcome to k.ai
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Let's personalize your experience
+            Let&apos;s personalize your experience
           </p>
         </div>
 

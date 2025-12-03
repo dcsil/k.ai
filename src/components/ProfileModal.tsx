@@ -3,9 +3,19 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/components/AuthContext";
 
+type UserProfile = {
+  userId: string;
+  hasReleasePlan: boolean;
+  releaseProgress: string;
+  helpNeeded: string | string[]; // Can be JSON string or parsed array
+  onboardingCompleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { getAccessToken } = useAuth();
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -77,18 +87,23 @@ export default function ProfileModal({ isOpen, onClose }: { isOpen: boolean; onC
                 Help Needed
               </label>
               <div className="flex flex-wrap gap-2">
-                {profile.helpNeeded && profile.helpNeeded.length > 0 ? (
-                  profile.helpNeeded.map((item: string) => (
-                    <span
-                      key={item}
-                      className="px-3 py-1 bg-indigo-100 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 rounded-full text-sm"
-                    >
-                      {item.replace(/_/g, " ")}
-                    </span>
-                  ))
-                ) : (
-                  <p className="text-gray-500">None specified</p>
-                )}
+                {(() => {
+                  const helpNeededArray = typeof profile.helpNeeded === 'string' 
+                    ? JSON.parse(profile.helpNeeded) 
+                    : profile.helpNeeded;
+                  return helpNeededArray && helpNeededArray.length > 0 ? (
+                    helpNeededArray.map((item: string) => (
+                      <span
+                        key={item}
+                        className="px-3 py-1 bg-indigo-100 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 rounded-full text-sm"
+                      >
+                        {item.replace(/_/g, " ")}
+                      </span>
+                    ))
+                  ) : (
+                    <p className="text-gray-500">None specified</p>
+                  );
+                })()}
               </div>
             </div>
           </div>
