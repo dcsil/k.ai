@@ -430,6 +430,7 @@ function PostComposer({
                 post: content.trim(),
                 platform: "instagram",
                 mediaUrls: [finalImageUrl],
+                scheduledAt: scheduledFor || undefined,
               };
 
         const res = await fetch("/api/social/post", {

@@ -1,6 +1,7 @@
 export async function postToInstagram(
   text: string,
   imageUrl?: string,
+  options?: {scheduledAt?: Date}
 ) {
   const apiKey = process.env.POSTIZ_API_KEY;
   const integrationId = process.env.POSTIZ_INSTAGRAM_INTEGRATION_ID;
@@ -9,10 +10,13 @@ export async function postToInstagram(
       throw new Error('Postiz API key or Instagram integration ID not configured');
   }
 
+  const isScheduled = !!options?.scheduledAt;
+
   const postizRequest = {
-      type: 'now' as const,
+      type: isScheduled ? 'schedule' : 'now',
       tags: [],
       shortLink: false,
+      ...(isScheduled && {date: options!.scheduledAt!.toISOString()}),
       posts: [
           {
               integration: {
@@ -32,6 +36,9 @@ export async function postToInstagram(
                               {
                                   id: generateUniqueId(),
                                   path: imageUrl,
+                                  alt: null,
+                                  thumbnail: null,
+                                  thumbnailTimestamp: null
                               }
                           ]
                       })

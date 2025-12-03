@@ -25,8 +25,9 @@ export async function POST(request: NextRequest) {
       }
 
       const imageUrl = mediaUrls && mediaUrls.length > 0 ? mediaUrls[0] : undefined;
+      const instagramOptions = scheduledAt ? {scheduledAt: new Date(scheduledAt) }: undefined;
 
-      result = await postToInstagram(post, imageUrl);
+      result = await postToInstagram(post, imageUrl, instagramOptions);
     }
 
     return NextResponse.json({ success: true, data: result });
