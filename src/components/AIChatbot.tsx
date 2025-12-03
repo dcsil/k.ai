@@ -78,7 +78,8 @@ export default function AIChatbot() {
   // Fetch user context (tasks + releases) on mount
   useEffect(() => {
     fetchUserContext();
-  }, [getAccessToken]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Autoscroll to bottom when new messages arrive
   useEffect(() => {

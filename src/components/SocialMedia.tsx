@@ -233,9 +233,11 @@ function PostCard({
             {post.mediaUrl && (
               <div>
                 <div className="text-sm font-semibold mb-1">Media</div>
-                <div className="w-full h-48 bg-muted rounded-lg flex items-center justify-center">
-                  Image attached
-                </div>
+                <img
+                  src={post.mediaUrl}
+                  alt="Post media"
+                  className="w-full h-48 object-cover rounded-lg border border-border"
+                />
               </div>
             )}
 
@@ -328,7 +330,12 @@ function PostComposer({
   const [status, setStatus] = useState<PostStatus>("draft");
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState("");
-  const [mediaUrl, setMediaUrl] = useState("");
+  // Image upload features (from dev-frontend)
+  const [imageUrl, setImageUrl] = useState("");
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadedUrl, setUploadedUrl] = useState("");
+  // YouTube features (from postiz-yt-updated)
   const [videoUrl, setVideoUrl] = useState("");
   const [title, setTitle] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -340,6 +347,44 @@ function PostComposer({
         ? prev.filter((p) => p !== platform)
         : [...prev, platform]
     );
+  }
+
+  // Handle image file selection and upload
+  async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Show preview immediately
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    // Upload file to get public URL
+    setUploading(true);
+    setError("");
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to upload image');
+      }
+
+      const data = await res.json();
+      setUploadedUrl(data.url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upload image');
+    } finally {
+      setUploading(false);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -355,6 +400,7 @@ function PostComposer({
       platforms,
       scheduledFor: scheduledFor || undefined,
       status,
+      mediaUrl: imageUrl || imagePreview || undefined,
     });
   }
 
@@ -365,6 +411,10 @@ function PostComposer({
     setError("");
 
     try {
+      // Priority: uploaded file URL > manual URL input > default logo
+      const finalImageUrl = uploadedUrl || imageUrl.trim() || 
+        "https://raw.githubusercontent.com/Yiyun95788/k.ai_test/main/kai_logo.png";
+
       // Submit to backend for each platform
       for (const platform of platforms) {
         const payload =
@@ -379,7 +429,7 @@ function PostComposer({
             : {
                 post: content.trim(),
                 platform: "instagram",
-                mediaUrls: ["https://raw.githubusercontent.com/Yiyun95788/k.ai_test/main/kai_logo.png"]
+                mediaUrls: [finalImageUrl],
               };
 
         const res = await fetch("/api/social/post", {
@@ -400,7 +450,7 @@ function PostComposer({
         platforms,
         scheduledFor: scheduledFor || undefined,
         status: "published",
-        mediaUrl: mediaUrl || undefined,
+        mediaUrl: finalImageUrl,
         videoUrl: videoUrl || undefined,
         title: title || undefined,
       });
@@ -496,6 +546,52 @@ function PostComposer({
             </>
           )}
 
+
+          <div>
+            <label className="text-sm font-medium block mb-2">Image</label>
+            
+            {/* Image URL input */}
+            <input
+              type="text"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="Enter image URL or upload file below"
+              className="w-full px-3 py-2 border border-border rounded-md bg-background mb-2"
+            />
+            
+            {/* File upload */}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              disabled={uploading}
+              className="w-full px-3 py-2 border border-border rounded-md bg-background text-sm"
+            />
+            
+            {/* Upload status */}
+            {uploading && (
+              <div className="text-xs text-muted-foreground mt-1">
+                Uploading image...
+              </div>
+            )}
+            
+            {uploadedUrl && (
+              <div className="text-xs text-green-600 mt-1">
+                Image uploaded successfully
+              </div>
+            )}
+            
+            {/* Image preview */}
+            {(imagePreview || imageUrl) && (
+              <div className="mt-2">
+                <img
+                  src={imagePreview || imageUrl}
+                  alt="Preview"
+                  className="w-full h-48 object-cover rounded-md border border-border"
+                />
+              </div>
+            )}
+          </div>
 
           <div>
             <label className="text-sm font-medium block mb-1">
