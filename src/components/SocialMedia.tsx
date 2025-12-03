@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 
-type Platform = "instagram" | "facebook" | "x" | "tiktok";
+type Platform = "instagram" | "facebook" | "x" | "tiktok" | "youtube";
 
-type PostStatus = "draft" | "scheduled" | "published";
+type PostStatus = "draft" | "scheduled" | "published" | "pending";
 
 type SocialPost = {
   id: string;
@@ -13,6 +13,8 @@ type SocialPost = {
   scheduledFor?: string;
   status: PostStatus;
   mediaUrl?: string;
+  videoUrl?: string;
+  title?: string;
   createdAt: string;
 };
 
@@ -214,10 +216,19 @@ function PostCard({
       {expanded && (
         <div className="border-t border-border p-4 bg-popover">
           <div className="space-y-3">
-            <div>
-              <div className="text-sm font-semibold mb-1">Content</div>
-              <p className="text-sm whitespace-pre-wrap">{post.content}</p>
-            </div>
+            {post.title && (
+              <div>
+                <div className="text-sm font-semibold mb-1">Title</div>
+                <p className="text-sm">{post.title}</p>
+              </div>
+            )}
+
+            {post.content && (
+              <div>
+                <div className="text-sm font-semibold mb-1">Content</div>
+                <p className="text-sm whitespace-pre-wrap">{post.content}</p>
+              </div>
+            )}
 
             {post.mediaUrl && (
               <div>
@@ -227,6 +238,13 @@ function PostCard({
                   alt="Post media"
                   className="w-full h-48 object-cover rounded-lg border border-border"
                 />
+              </div>
+            )}
+
+            {post.videoUrl && (
+              <div>
+                <div className="text-sm font-semibold mb-1">Video URL</div>
+                <p className="text-sm text-blue-600 break-all">{post.videoUrl}</p>
               </div>
             )}
 
@@ -289,6 +307,7 @@ function PlatformIcon({ platform }: { platform: Platform }) {
     facebook: "FB",
     x: "X",
     tiktok: "TT",
+    youtube: "YT",
   };
 
   return (
@@ -311,10 +330,16 @@ function PostComposer({
   const [status, setStatus] = useState<PostStatus>("draft");
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState("");
+  // Image upload features (from dev-frontend)
   const [imageUrl, setImageUrl] = useState("");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadedUrl, setUploadedUrl] = useState("");
+  // YouTube features (from postiz-yt-updated)
+  const [videoUrl, setVideoUrl] = useState("");
+  const [title, setTitle] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   function togglePlatform(platform: Platform) {
     setPlatforms((prev) =>
@@ -362,9 +387,13 @@ function PostComposer({
     }
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!content.trim() || platforms.length === 0) return;
+
+    setSubmitError("");
+
+    setIsSubmitting(true);
 
     onAdd({
       content: content.trim(),
@@ -377,11 +406,6 @@ function PostComposer({
 
   async function handlePostNow() {
     if (!content.trim() || platforms.length === 0) return;
-    
-    if (!platforms.includes("instagram")) {
-      setError("Please select Instagram to post now");
-      return;
-    }
 
     setPosting(true);
     setError("");
@@ -391,39 +415,69 @@ function PostComposer({
       const finalImageUrl = uploadedUrl || imageUrl.trim() || 
         "https://raw.githubusercontent.com/Yiyun95788/k.ai_test/main/kai_logo.png";
 
-      const res = await fetch("/api/social/post", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          post: content.trim(),
-          platforms: ["instagram"],
-          mediaUrls: [finalImageUrl],
-        }),
-      });
+      // Submit to backend for each platform
+      for (const platform of platforms) {
+        const payload =
+          platform === "youtube"
+            ? {
+                platform: "youtube",
+                videoUrl,
+                title,
+                privacyType: "private",
+                scheduledAt: scheduledFor || undefined,
+              }
+            : {
+                post: content.trim(),
+                platform: "instagram",
+                mediaUrls: [finalImageUrl],
+              };
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to post");
+        const res = await fetch("/api/social/post", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.error || `Failed to post to ${platform}`);
+        }
       }
 
+      // Add to local state after successful submission
       onAdd({
         content: content.trim(),
         platforms,
+        scheduledFor: scheduledFor || undefined,
         status: "published",
         mediaUrl: finalImageUrl,
+        videoUrl: videoUrl || undefined,
+        title: title || undefined,
       });
+    
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to post");
     } finally {
       setPosting(false);
     }
   }
+  
+  const isYouTubeSelected = platforms.includes("youtube");
+  const isInstagramSelected = platforms.some(
+    (p) => p !== "youtube"
+  );
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-card border border-border rounded-lg p-6 max-w-2xl w-full">
+      <div className="bg-card border border-border rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <h3 className="text-xl font-semibold mb-4">Create Post</h3>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {submitError && (
+            <div className="p-3 bg-red-100 text-red-800 rounded-md text-sm">
+              {submitError}
+            </div>
+          )}
+
           <div>
             <label className="text-sm font-medium block mb-1">Content</label>
             <textarea
@@ -440,8 +494,8 @@ function PostComposer({
 
           <div>
             <label className="text-sm font-medium block mb-2">Platforms</label>
-            <div className="grid grid-cols-4 gap-2">
-              {(["instagram", "facebook", "x", "tiktok"] as Platform[]).map(
+            <div className="grid grid-cols-5 gap-2">
+              {(["instagram", "facebook", "x", "tiktok", "youtube"] as Platform[]).map(
                 (platform) => (
                   <button
                     key={platform}
@@ -459,6 +513,39 @@ function PostComposer({
               )}
             </div>
           </div>
+
+          {isYouTubeSelected && (
+            <>
+              <div>
+                <label className="text-sm font-medium block mb-1">
+                  Video URL *
+                </label>
+                <input
+                  type="url"
+                  value={videoUrl}
+                  onChange={(e) => setVideoUrl(e.target.value)}
+                  className="w-full px-3 py-2 border border-border rounded-md bg-background"
+                  placeholder="https://example.com/video.mp4"
+                  required={isYouTubeSelected}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium block mb-1">
+                  Video Title *
+                </label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full px-3 py-2 border border-border rounded-md bg-background"
+                  placeholder="My awesome video title"
+                  required={isYouTubeSelected}
+                />
+              </div>
+            </>
+          )}
+
 
           <div>
             <label className="text-sm font-medium block mb-2">Image</label>
@@ -536,14 +623,16 @@ function PostComposer({
               type="button"
               onClick={onClose}
               className="flex-1 px-4 py-2 border border-border rounded-md"
+              disabled={isSubmitting}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md"
+              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md disabled:opacity-50"
+              disabled={isSubmitting}
             >
-              {status === "scheduled" ? "Schedule Post" : "Save Draft"}
+              Save Draft
             </button>
             <button
               type="button"
@@ -551,7 +640,7 @@ function PostComposer({
               disabled={posting || !content.trim() || platforms.length === 0}
               className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md disabled:opacity-50"
             >
-              {posting ? "Posting..." : "Post Now"}
+              {posting ? "Posting..." : "Post"}
             </button>
           </div>
         </form>

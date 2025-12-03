@@ -1,19 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { postToInstagram } from '@/lib/ayrshare';
+import { postToInstagram, postToYouTube } from '@/lib/ayrshare';
 
 export async function POST(request: NextRequest) {
   try {
-    const { post, mediaUrls } = await request.json();
+    const body = await request.json();
+    const { platform, post, mediaUrls, videoUrl, title, privacyType, scheduledAt } = body;
 
-    if (!post) {
-      return NextResponse.json(
-        { error: 'Missing required field: post' },
-        { status: 400 }
-      );
+    let result;
+
+    if (platform === 'youtube') {
+      result = await postToYouTube(videoUrl, title, {
+        privacyType: privacyType || 'private',
+        selfDeclaredMadeForKids: 'no',
+        ...(scheduledAt && { scheduledAt: new Date(scheduledAt) }),
+      });
+    } else {
+      // Default to Instagram
+
+      if (!post) {
+        return NextResponse.json(
+          { error: 'Missing required field: post' },
+          { status: 400 }
+        );
+      }
+
+      const imageUrl = mediaUrls && mediaUrls.length > 0 ? mediaUrls[0] : undefined;
+
+      result = await postToInstagram(post, imageUrl);
     }
-
-    const imageUrl = mediaUrls && mediaUrls.length > 0 ? mediaUrls[0] : undefined;
-    const result = await postToInstagram(post, imageUrl);
 
     return NextResponse.json({ success: true, data: result });
   } catch (error) {
