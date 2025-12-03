@@ -1,23 +1,60 @@
-export async function postToInstagram(text: string, imageUrl?: string) {
-  const apiKey = process.env.AYRSHARE_API_KEY;
+export async function postToInstagram(
+  text: string,
+  imageUrl?: string,
+) {
+  const apiKey = process.env.POSTIZ_API_KEY;
+  const integrationId = process.env.POSTIZ_INSTAGRAM_INTEGRATION_ID;
 
-  const postData = {
-    post: text,
-    platforms: ['instagram'],
-    ...(imageUrl && { mediaUrls: [imageUrl] })
+  if (!apiKey || !integrationId) {
+      throw new Error('Postiz API key or Instagram integration ID not configured');
+  }
+
+  const postizRequest = {
+      type: 'now' as const,
+      tags: [],
+      shortLink: false,
+      posts: [
+          {
+              integration: {
+                  id: integrationId,
+              },
+              settings: {
+                  __type: "instagram-standalone",
+                  post_type: "post",
+                  collaborators: []
+              },
+              value: [
+                  {
+                      id: generateUniqueId(),
+                      content: text,
+                      ...(imageUrl && {
+                          image: [
+                              {
+                                  id: generateUniqueId(),
+                                  path: imageUrl,
+                              }
+                          ]
+                      })
+                  }
+              ]
+          }
+      ]
   };
 
-  const response = await fetch('https://app.ayrshare.com/api/post', {
+  const response = await fetch('http://kai.kevin.plus:5000/api/public/v1/posts', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${apiKey}`,
+      'Authorization': `${apiKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(postData),
+    body: JSON.stringify(postizRequest),
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to post: ${response.status}`);
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+        `Failed to post to Instagram: ${response.status} - ${errorData.message || response.statusText}`
+    );
   }
 
   return await response.json();
