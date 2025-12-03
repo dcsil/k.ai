@@ -429,6 +429,20 @@ function PostComposer({
           )}
 
           <div>
+            <label className="text-sm font-medium block mb-1">Content</label>
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className="w-full px-3 py-2 border border-border rounded-md bg-background min-h-[120px]"
+              placeholder=""
+              required
+            />
+            <div className="text-xs text-muted-foreground mt-1">
+              {content.length} characters
+            </div>
+          </div>
+
+          <div>
             <label className="text-sm font-medium block mb-2">Platforms</label>
             <div className="grid grid-cols-5 gap-2">
               {(["instagram", "facebook", "x", "tiktok", "youtube"] as Platform[]).map(
@@ -522,7 +536,7 @@ function PostComposer({
               className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md disabled:opacity-50"
               disabled={isSubmitting}
             >
-              {status === "scheduled" ? "Schedule Post" : "Save Draft"}
+              Save Draft
             </button>
             <button
               type="button"
@@ -530,15 +544,7 @@ function PostComposer({
               disabled={posting || !content.trim() || platforms.length === 0}
               className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md disabled:opacity-50"
             >
-              {posting ? "Posting..." : "Post Now"}
-            </button>
-            <button
-              type="button"
-              onClick={handlePostNow}
-              disabled={posting || !content.trim() || platforms.length === 0}
-              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md disabled:opacity-50"
-            >
-              {posting ? "Posting..." : "Post Now"}
+              {posting ? "Posting..." : "Post"}
             </button>
           </div>
         </form>

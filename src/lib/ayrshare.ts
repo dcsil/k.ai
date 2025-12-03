@@ -39,20 +39,15 @@ export async function postToYouTube(
   //   throw new Error('Postiz API key or YouTube integration ID not configured');
   // }
 
-  // print type to console
-  console.log('Type:' + options?.scheduledAt ? 'schedule' : 'post');
-
   const postizRequest = {
-    // type: options?.scheduledAt ? 'schedule' : 'post',
-    type: 'now',
+    type: options?.scheduledAt ? 'schedule' : 'now',
     tags: [],
     shortLink: false,
     ...(options?.scheduledAt && { date: options.scheduledAt.toISOString() }),
     posts: [
       {
         integration: {
-          // id: integrationId,
-          id: "cmi6rauor0001rv6qhye1gbke",
+          id: integrationId,
         },
         settings: {
           title: title,

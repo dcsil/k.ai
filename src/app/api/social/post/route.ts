@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
       const imageUrl = mediaUrls && mediaUrls.length > 0 ? mediaUrls[0] : undefined;
 
-      result = await postToInstagram(post, mediaUrls);
+      result = await postToInstagram(post, imageUrl);
     }
 
     return NextResponse.json({ success: true, data: result });
