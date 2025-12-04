@@ -8,6 +8,7 @@ export default defineConfig({
   plugins: [tsconfigPaths(), react()],
   test: {
     environment: 'jsdom',
+    setupFiles: ['./tests/setup.ts'],
     exclude: [
       ...configDefaults.exclude,
       '**/.next/**',

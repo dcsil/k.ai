@@ -120,6 +120,7 @@ model User {
 
   // Relations
   preferences      UserPreference?
+  profile          UserProfile?
   authAccounts     AuthAccount[]
   refreshTokens    RefreshToken[]
   emailVerifications EmailVerificationToken[]
@@ -157,6 +158,24 @@ model UserPreference {
   // UI
   theme ThemePreference @default(SYSTEM)
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// User onboarding profile
+model UserProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Onboarding answers
+  hasReleasePlan      Boolean?  // Do they have a release plan?
+  releaseProgress     String?   // "not_started" | "planning" | "in_progress" | "ready_to_launch"
+  helpNeeded          String    @default("[]") // JSON array: ["project_planning", "time_management", "social_media_promotion", "networking"]
+  
+  // Track completion
+  onboardingCompleted Boolean   @default(false)
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

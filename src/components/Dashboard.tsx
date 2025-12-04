@@ -2,10 +2,12 @@
 
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthContext";
+import OnboardingCheck from "@/components/OnboardingCheck";
 import Calendar from "./Calendar";
 import ReleaseTimeline from "./ReleaseTimeline";
 import SocialMedia from "./SocialMedia";
 import AIChatbot from "./AIChatbot";
+import ProfileModal from "@/components/ProfileModal";
 
 type Status = "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
 
@@ -36,6 +38,7 @@ export default function Dashboard() {
   const [releases, setReleases] = useState<Release[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedReleaseId, setSelectedReleaseId] = useState<string>("");
+  const [showProfile, setShowProfile] = useState(false);
 
   async function fetchReleases() {
     try {
@@ -87,14 +90,41 @@ export default function Dashboard() {
   // Fetch releases on mount
   useEffect(() => {
     fetchReleases();
-  }, [getAccessToken]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Fetch tasks when release is selected
   useEffect(() => {
     if (selectedReleaseId) {
       fetchTasks(selectedReleaseId);
     }
-  }, [selectedReleaseId, getAccessToken]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedReleaseId]);
+
+  useEffect(() => {
+    async function loadTasks() {
+      try {
+        const token = getAccessToken();
+        
+        if (!token) {
+          console.error("No token available");
+          return;
+        }
+        
+        const response = await fetch("/api/tasks", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setTasks(data.tasks || []);
+        }
+      } catch (error) {
+        console.error("Failed to load tasks:", error);
+      }
+    }
+    loadTasks();
+  }, [getAccessToken]);
 
   async function addTask(title: string) {
     if (!title.trim() || !selectedReleaseId) return;
@@ -239,82 +269,90 @@ export default function Dashboard() {
   const progress = tasks.length ? Math.round((completedCount / tasks.length) * 100) : 0;
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex">
-      <aside className="w-64 bg-card border-r border-border flex flex-col">
-        <div className="p-6 flex-1">
-          <h1 className="text-2xl font-bold mb-8">k.ai</h1>
-          <nav className="space-y-2">
-            <NavItem
-              label="Tasks"
-              active={currentSection === "tasks"}
-              onClick={() => setCurrentSection("tasks")}
-            />
-            <NavItem
-              label="Calendar"
-              active={currentSection === "calendar"}
-              onClick={() => setCurrentSection("calendar")}
-            />
-            <NavItem
-              label="Releases"
-              active={currentSection === "releases"}
-              onClick={() => setCurrentSection("releases")}
-            />
-            <NavItem
-              label="Social Media"
-              active={currentSection === "social"}
-              onClick={() => setCurrentSection("social")}
-            />
-            <NavItem
-              label="AI Assistant"
-              active={currentSection === "chat"}
-              onClick={() => setCurrentSection("chat")}
-            />
-          </nav>
-        </div>
-        
-        <div className="p-6 border-t border-border">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold">
-              {user?.email?.[0]?.toUpperCase() || "U"}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium truncate">{user?.email}</div>
-            </div>
+    <OnboardingCheck>
+      <div className="min-h-screen bg-background text-foreground flex">
+        <aside className="w-64 bg-card border-r border-border flex flex-col">
+          <div className="p-6 flex-1">
+            <h1 className="text-2xl font-bold mb-8">k.ai</h1>
+            <nav className="space-y-2">
+              <NavItem
+                label="Tasks"
+                active={currentSection === "tasks"}
+                onClick={() => setCurrentSection("tasks")}
+              />
+              <NavItem
+                label="Calendar"
+                active={currentSection === "calendar"}
+                onClick={() => setCurrentSection("calendar")}
+              />
+              <NavItem
+                label="Releases"
+                active={currentSection === "releases"}
+                onClick={() => setCurrentSection("releases")}
+              />
+              <NavItem
+                label="Social Media"
+                active={currentSection === "social"}
+                onClick={() => setCurrentSection("social")}
+              />
+              <NavItem
+                label="AI Assistant"
+                active={currentSection === "chat"}
+                onClick={() => setCurrentSection("chat")}
+              />
+            </nav>
           </div>
-          <button
-            onClick={logout}
-            className="w-full px-3 py-2 text-sm border border-border rounded-md hover:bg-accent"
-          >
-            Sign Out
-          </button>
-        </div>
-      </aside>
+          
+          <div className="p-6 border-t border-border">
+            <button 
+              onClick={() => setShowProfile(true)}
+              className="flex items-center gap-3 mb-3 w-full hover:bg-gray-100 dark:hover:bg-gray-700 p-2 rounded-lg transition"
+            >
+              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold">
+                {user?.email?.[0]?.toUpperCase() || "U"}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium truncate">{user?.email}</div>
+              </div>
+            </button>
+            
+            <button
+              onClick={logout}
+              className="w-full px-3 py-2 text-sm border border-border rounded-md hover:bg-accent"
+            >
+              Sign Out
+            </button>
+          </div>
+        </aside>
 
-      <main className="flex-1 overflow-auto">
-        {currentSection === "tasks" && (
-          <TasksSection
-            tasks={tasks}
-            progress={progress}
-            releases={releases}
-            selectedReleaseId={selectedReleaseId}
-            onSelectRelease={setSelectedReleaseId}
-            onAddTask={addTask}
-            onDeleteTask={deleteTask}
-            onToggleExpand={toggleExpand}
-            onToggleComplete={toggleComplete}
-            onUpdateStatus={updateTaskStatus}
-            onUpdateNotes={updateNotes}
-            loading={loading}
-          />
-        )}
-        {currentSection === "calendar" && <Calendar />}
-        {currentSection === "releases" && (
-          <ReleaseTimeline onReleasesChange={fetchReleases} />
-        )}
-        {currentSection === "social" && <SocialMedia />}
-        {currentSection === "chat" && <AIChatbot />}
-      </main>
-    </div>
+        <main className="flex-1 overflow-auto">
+          {currentSection === "tasks" && (
+            <TasksSection
+              tasks={tasks}
+              progress={progress}
+              releases={releases}
+              selectedReleaseId={selectedReleaseId}
+              onSelectRelease={setSelectedReleaseId}
+              onAddTask={addTask}
+              onDeleteTask={deleteTask}
+              onToggleExpand={toggleExpand}
+              onToggleComplete={toggleComplete}
+              onUpdateStatus={updateTaskStatus}
+              onUpdateNotes={updateNotes}
+              loading={loading}
+            />
+          )}
+          {currentSection === "calendar" && <Calendar />}
+          {currentSection === "releases" && (
+            <ReleaseTimeline onReleasesChange={fetchReleases} />
+          )}
+          {currentSection === "social" && <SocialMedia />}
+          {currentSection === "chat" && <AIChatbot />}
+        </main>
+
+        <ProfileModal isOpen={showProfile} onClose={() => setShowProfile(false)} />
+      </div>
+    </OnboardingCheck>
   );
 }
 
